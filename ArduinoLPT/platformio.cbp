@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="ArduinoLPT" />
+		<Option makefile_is_custom="1" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<MakeCommands>
+			<Build command="/usr/local/bin/platformio -f -c codeblocks run" />
+			<CompileFile command="/usr/local/bin/platformio -f -c codeblocks run" />
+			<Clean command="/usr/local/bin/platformio -f -c codeblocks run -t clean" />
+			<DistClean command="/usr/local/bin/platformio -f -c codeblocks run -t clean" />
+			<AskRebuildNeeded command="1" />
+			<SilentBuild command="/usr/local/bin/platformio -f -c codeblocks run &gt; $(CMD_NULL)" />
+		</MakeCommands>
+		<Build>
+			<Target title="Debug">
+				<Option type="4" />
+				<Option compiler="gcc" />
+				<Option parameters="-f -c codeblocks run -t upload" />
+				<Option host_application="/usr/local/bin/platformio" />
+				<Option run_host_application_in_terminal="1" />
+				<MakeCommands>
+					<Build command="/usr/local/bin/platformio -f -c codeblocks run" />
+					<CompileFile command="/usr/local/bin/platformio -f -c codeblocks run" />
+					<Clean command="/usr/local/bin/platformio -f -c codeblocks run -t clean" />
+					<DistClean command="/usr/local/bin/platformio -f -c codeblocks run -t clean" />
+					<AskRebuildNeeded command="1" />
+					<SilentBuild command="/usr/local/bin/platformio -f -c codeblocks run &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="Release">
+				<Option type="4" />
+				<Option compiler="gcc" />
+				<Option parameters="-f -c codeblocks run -t upload" />
+				<Option host_application="/usr/local/bin/platformio" />
+				<Option run_host_application_in_terminal="1" />
+				<MakeCommands>
+					<Build command="/usr/local/bin/platformio -f -c codeblocks run" />
+					<CompileFile command="/usr/local/bin/platformio -f -c codeblocks run" />
+					<Clean command="/usr/local/bin/platformio -f -c codeblocks run -t clean" />
+					<DistClean command="/usr/local/bin/platformio -f -c codeblocks run -t clean" />
+					<AskRebuildNeeded command="1" />
+					<SilentBuild command="/usr/local/bin/platformio -f -c codeblocks run &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-DF_CPU=16000000L" />
+			<Add option="-DPLATFORMIO=30500" />
+			<Add option="-DARDUINO_ARCH_AVR" />
+			<Add option="-DARDUINO_AVR_UNO" />
+			<Add option="-DARDUINO=10619" />
+			<Add option="-D__AVR_ATmega328P__" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/cores/arduino" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/variants/standard" />
+			<Add directory="/home/francois/workspace/ArduinoLPT/src" />
+			<Add directory="/home/francois/workspace/ArduinoLPT/lib/dcc_timer/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src" />
+			<Add directory="/home/francois/workspace/ArduinoLPT/lib/Nokia5510/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src" />
+			<Add directory="/home/francois/workspace/ArduinoLPT/lib/I2C_keyboard/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/EEPROM/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/HID/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SoftwareSerial/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Adafruit_CircuitPlayground" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Adafruit_CircuitPlayground/utility" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Bridge/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Esplora/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Ethernet/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Firmata" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Firmata/utility" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/GSM/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Keyboard/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/LiquidCrystal/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Mouse/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/RobotIRremote/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Robot_Control/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Robot_Motor/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/SD/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Servo/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/SpacebrewYun/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Stepper/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/TFT/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/Temboo/src" />
+			<Add directory="/home/francois/.platformio/packages/framework-arduinoavr/libraries/WiFi/src" />
+			<Add directory="/home/francois/.platformio/packages/toolchain-atmelavr/avr/include" />
+			<Add directory="/home/francois/.platformio/packages/toolchain-atmelavr/lib/gcc/avr/4.9.2/include" />
+			<Add directory="/home/francois/.platformio/packages/toolchain-atmelavr/lib/gcc/avr/4.9.2/include-fixed" />
+			<Add directory="/home/francois/.platformio/packages/tool-unity" />
+		</Compiler>
+		<Unit filename="lib/I2C_keyboard/src/I2C_keyboard.cpp" />
+		<Unit filename="lib/I2C_keyboard/src/I2C_keyboard.h" />
+		<Unit filename="lib/I2C_keyboard/src/utility/lptkbd.cpp" />
+		<Unit filename="lib/I2C_keyboard/src/utility/lptkbd.h" />
+		<Unit filename="lib/Nokia5510/src/display.cpp" />
+		<Unit filename="lib/Nokia5510/src/display.h" />
+		<Unit filename="lib/Nokia5510/src/nokia5510.cpp" />
+		<Unit filename="lib/Nokia5510/src/nokia5510.h" />
+		<Unit filename="lib/dcc_timer/src/dcc_timer.cpp" />
+		<Unit filename="lib/dcc_timer/src/dcc_timer.h" />
+		<Unit filename="lib/dcc_timer/src/organizer.cpp" />
+		<Unit filename="lib/dcc_timer/src/organizer.h" />
+		<Unit filename="platformio.ini" />
+		<Unit filename="src/LPT.ino" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
