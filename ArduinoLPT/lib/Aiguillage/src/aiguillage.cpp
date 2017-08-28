@@ -25,7 +25,6 @@ aiguille::aiguille(const relais_t * _act_droit, const relais_t * _act_devie, a_t
 }
 
 void aiguille::set_state(a_state position) {
-	uint8_t i, count=0;
 	const relais_t * act_relais;
 
 	// Relais already in the right position ? just return

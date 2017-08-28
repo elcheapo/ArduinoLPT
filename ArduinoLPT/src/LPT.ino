@@ -8,7 +8,7 @@
 #include <nokia5510.h>
 #include <dcc_timer.h>
 #include <aiguillage.h>
-#include <Potar.h>
+#include <potar.h>
 #include <Wire.h>
 #include <SPI.h>
 
@@ -93,16 +93,19 @@ void setup()
 			F(" \x80\x80\x80\x80 - \x81\x81\x81\x81"));
 	lcd.update();
 	delay (500);
+	Serial.println(F("Scanning I2C bus"));
 	Wire.begin();
 	for (i=1; i<64; i++) {
 		// scan I2C bus
 		Wire.beginTransmission(i << 1); // transmit to PCF8574
 		ret = Wire.endTransmission();
-		Serial.print(F("addr="));
-		Serial.print(i << 1,16);
-		Serial.print(F("  ret="));
-		Serial.println(ret,10);
+		if (ret == 0) {
+			Serial.print(F("I2C dev at address : "));
+			Serial.println(i << 1,16);
+		}
 	}
+	Serial.println(F("Done"));
+
 //	dcc_control.begin(analog);
 
 
