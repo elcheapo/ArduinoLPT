@@ -1,12 +1,31 @@
 
 #include <Arduino.h>
+#include <io_port.h>
+#include <i2c_port.h>
+#include <relay.h>
 #include <I2C_keyboard.h>
 #include <display.h>
 #include <nokia5510.h>
 #include <dcc_timer.h>
+#include <aiguillage.h>
 #include <Potar.h>
 #include <Wire.h>
 #include <SPI.h>
+
+
+I2c_Port i2c_port1(0x42);
+
+const relais_t relais[] PROGMEM = {
+		{&i2c_port1, 0x01, 1} //
+		,{&i2c_port1, 0x02, 1} //
+		,{&i2c_port1, 0x04, 1} //
+		,{&i2c_port1, 0x08, 1} //
+		,{&i2c_port1, 0x80, 1} //
+		,{&i2c_port1, 0x40, 1} //
+		,{&i2c_port1, 0x20, 1} //
+		,{&i2c_port1, 0x10, 1} //
+};
+
 
 I2c_Keyboard kbd(0x20);
 Nokia5510 lcd(6,7,8);
@@ -14,6 +33,9 @@ DCC_timer dcc_control;
 Potar pot1(2);
 Potar pot2(1);
 Potar pot3(0);
+aiguille aiguillage(&relais[1],&relais[0],t_peco); // Aiguillage type Peco
+
+
 
 /* things to do */
 uint8_t which_one;
