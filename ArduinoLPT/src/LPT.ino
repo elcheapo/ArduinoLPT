@@ -13,7 +13,7 @@
 #include <SPI.h>
 
 
-I2c_Port i2c_port1(0x22);
+I2c_Port i2c_port1(0x21);
 
 const relais_t relais[] PROGMEM = {
 		{&i2c_port1, 0x01, 1} //
@@ -95,13 +95,13 @@ void setup()
 	delay (500);
 	Serial.println(F("Scanning I2C bus"));
 	Wire.begin();
-	for (i=1; i<64; i++) {
+	for (i=1; i<127; i++) {
 		// scan I2C bus
-		Wire.beginTransmission(i << 1); // transmit to PCF8574
+		Wire.beginTransmission(i); // transmit to PCF8574
 		ret = Wire.endTransmission();
 		if (ret == 0) {
-			Serial.print(F("I2C dev at address : "));
-			Serial.println(i << 1,16);
+			Serial.print(F("I2C dev at address : 0x"));
+			Serial.println(i,16);
 		}
 	}
 	Serial.println(F("Done"));
