@@ -13,7 +13,7 @@
 #include <SPI.h>
 
 
-I2c_Port i2c_port1(0x42);
+I2c_Port i2c_port1(0x22);
 
 const relais_t relais[] PROGMEM = {
 		{&i2c_port1, 0x01, 1} //
@@ -99,7 +99,7 @@ void setup()
 		Wire.beginTransmission(i << 1); // transmit to PCF8574
 		ret = Wire.endTransmission();
 		Serial.print(F("addr="));
-		Serial.print(i,16);
+		Serial.print(i << 1,16);
 		Serial.print(F("  ret="));
 		Serial.println(ret,10);
 	}
@@ -131,6 +131,12 @@ void loop()
 
 				}
 				break;
+			case 'A':
+				aiguillage.set_state(s_droit);
+				break;
+			case 'B':
+				aiguillage.set_state(s_devie);
+				break;
 			}
 			default:
 				break;
@@ -139,24 +145,24 @@ void loop()
 	// Pot handling
 	lcd.clear();
 	position = pot1.get();
-	Serial.print(F("Pot1 = "));
-	Serial.println(position);
+//	Serial.print(F("Pot1 = "));
+//	Serial.println(position);
 	if (position > 512) { // "Positive"
 		lcd.bar(1,(position - 512) / 13);
 	} else {
 		lcd.bar(2,(512- position) / 13);
 	}
 	position = pot2.get();
-	Serial.print(F("Pot1 = "));
-	Serial.println(position);
+//	Serial.print(F("Pot1 = "));
+//	Serial.println(position);
 	if (position > 512) { // "Positive"
 		lcd.bar(4,(position - 512) / 13);
 	} else {
 		lcd.bar(5,(512- position) / 13);
 	}
 	position = pot3.get();
-	Serial.print(F("Pot1 = "));
-	Serial.println(position);
+//	Serial.print(F("Pot1 = "));
+//	Serial.println(position);
 	if (position > 512) { // "Positive"
 		lcd.bar(7,(position - 512) / 13);
 	} else {
