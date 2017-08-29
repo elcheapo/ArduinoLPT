@@ -177,7 +177,7 @@ void loop()
 
 
 
-#define NB_TASK 8
+#define NB_TASK 9
 void (*todo_in_idle[NB_TASK])() = {
 		&scan_col_0,
 		&scan_col_1,
@@ -186,7 +186,8 @@ void (*todo_in_idle[NB_TASK])() = {
 		&update_lcd,
 		&read_pot1,
 		&read_pot2,
-		&read_pot3
+		&read_pot3,
+		&run_organizer
 };
 
 void yield(void) {
