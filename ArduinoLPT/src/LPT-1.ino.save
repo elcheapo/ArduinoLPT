@@ -40,9 +40,6 @@ aiguille aiguillage(&relais[1],&relais[0],t_peco); // Aiguillage type Peco
 /* things to do */
 uint8_t which_one;
 uint8_t top_level_delay;
-uint8_t last;
-
-enum station_mode { s_analog, s_digital, s_unknown };
 
 ISR(TIMER1_OVF_vect) {
 	dcc_control.timer_overflow_interrupt();
@@ -108,7 +105,6 @@ void setup()
 		}
 	}
 	Serial.println(F("Done"));
-	last = 0;
 
 //	dcc_control.begin(analog);
 
@@ -118,36 +114,11 @@ void setup()
 // The loop function is called in an endless loop
 void loop()
 {
-	uint8_t key;
+	uint8_t last,key;
 	uint16_t position;
 //Add your repeated code here
 	top_level_delay = 0;
-	delay(100);
-	// Select Analog / Digital
-	station_mode = s_unknown;
-	lcd.menu(F("            "),
-			 F(" Select     "),
-			 F(" A = Analog "),
-			 F(" B = digital"),
-			 F("  v1.00     "),
-			 F(" \x80\x80\x80\x80 - \x81\x81\x81\x81"));
-
-	while (station_mode == s_unknown) {
-		delay(50);
-		key = kbd.get_key();
-		switch (key) {
-		case 'A':
-			station_mode = s_analog;
-			break;
-		case 'D':
-			station_mode = s_digital;
-			break;
-		default:
-			break;
-		}
-	}
-	// station_mode is set to Digital or Analog
-
+	delay(200);
 	// keypress handling
 	last=0;
 	key=kbd.get_key_debounced(last);
