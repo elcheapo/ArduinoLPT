@@ -20,10 +20,10 @@ const relais_t relais[] PROGMEM = {
 		,{&i2c_port1, 0x02, 1} //
 		,{&i2c_port1, 0x04, 1} //
 		,{&i2c_port1, 0x08, 1} //
-		,{&i2c_port1, 0x80, 1} //
-		,{&i2c_port1, 0x40, 1} //
-		,{&i2c_port1, 0x20, 1} //
-		,{&i2c_port1, 0x10, 1} //
+		,{&i2c_port1, 0x80, 0} //
+		,{&i2c_port1, 0x40, 0} //
+		,{&i2c_port1, 0x20, 0} //
+		,{&i2c_port1, 0x10, 0} //
 };
 
 
@@ -33,7 +33,7 @@ DCC_timer dcc_control;
 Potar pot1(2);
 Potar pot2(1);
 Potar pot3(0);
-aiguille aiguillage(&relais[1],&relais[0],t_peco); // Aiguillage type Peco
+aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
 
 
 
@@ -105,6 +105,7 @@ void setup()
 		}
 	}
 	Serial.println(F("Done"));
+	i2c_port1.write(0xff);
 
 //	dcc_control.begin(analog);
 

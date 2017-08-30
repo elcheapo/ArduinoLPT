@@ -20,7 +20,10 @@ I2c_Port::I2c_Port(uint8_t _i2c_address) {
 void I2c_Port::write (uint8_t x) {
 	uint8_t ret;
 	Wire.beginTransmission(i2c_address); // transmit to PCF8574
-	Wire.write(x);
+	current_value = x;
+	Serial.print(F("Write, value = 0x"));
+	Serial.println(current_value,16);
+	Wire.write(current_value);
 	ret = Wire.endTransmission();
 	if (ret != 0) Serial.print(F("NoACK"));
 
@@ -29,14 +32,20 @@ void I2c_Port::write (uint8_t x) {
 void I2c_Port::clear_mask (uint8_t x) {
 	uint8_t ret;
 	Wire.beginTransmission(i2c_address); // transmit to PCF8574
-	Wire.write(~(x) & current_value);
+	current_value = ~(x) & current_value;
+	Serial.print(F("Clear Mask, value = 0x"));
+	Serial.println(current_value,16);
+	Wire.write(current_value);
 	ret = Wire.endTransmission();
 	if (ret != 0) Serial.print(F("NoACK"));
 }
 void I2c_Port::set_mask(uint8_t x) {
 	uint8_t ret;
 	Wire.beginTransmission(i2c_address); // transmit to PCF8574
-	Wire.write( x | current_value);
+	current_value = x | current_value;
+	Serial.print(F("Set Mask, value = 0x"));
+	Serial.println(current_value,16);
+	Wire.write(current_value);
 	ret = Wire.endTransmission();
 	if (ret != 0) Serial.print(F("NoACK"));
 }
