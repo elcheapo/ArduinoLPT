@@ -42,7 +42,7 @@ uint8_t which_one;
 uint8_t top_level_delay;
 uint8_t last;
 
-enum station_mode { s_analog, s_digital, s_unknown };
+tmode station_mode;
 
 ISR(TIMER1_OVF_vect) {
 	dcc_control.timer_overflow_interrupt();
@@ -137,17 +137,36 @@ void loop()
 		key = kbd.get_key();
 		switch (key) {
 		case 'A':
-			station_mode = s_analog;
+			station_mode = analog;
 			break;
 		case 'D':
-			station_mode = s_digital;
+			station_mode = digital;
 			break;
 		default:
 			break;
 		}
 	}
 	// station_mode is set to Digital or Analog
+	dcc_control.begin(station_mode);
+	while (1) {
+		delay (100);
+		key=kbd.get_key_debounced(last);
+		if (station_mode == analog) {
+			// Analog mode
+			position = pot1.get();
+			if (position > 530) {
+				dcc_control.analog_set_speed_and_direction(position-512,forward);
+			} else if (position < 490) {
+				dcc_control.analog_set_speed_and_direction(512-position,backward);
+			} else {
+				dcc_control.analog_set_speed_and_direction(0,off);
+			}
+		} else {
+			// digital mode
+		}
 
+
+	}
 	// keypress handling
 	last=0;
 	key=kbd.get_key_debounced(last);
