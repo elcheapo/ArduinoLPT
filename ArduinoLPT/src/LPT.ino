@@ -42,7 +42,7 @@ uint8_t which_one;
 uint8_t top_level_delay;
 uint8_t last;
 
-t_mo station_mode;
+tmode station_mode;
 
 ISR(TIMER1_OVF_vect) {
 	dcc_control.timer_overflow_interrupt();
@@ -125,7 +125,7 @@ void loop()
 	top_level_delay = 0;
 	delay(100);
 	// Select Analog / Digital
-	station_mode = unknown;
+	station_mode = dcc_off;
 	lcd.menu(F("            "),
 			 F(" Select     "),
 			 F(" A = Analog "),
@@ -133,7 +133,7 @@ void loop()
 			 F("  v1.00     "),
 			 F(" \x80\x80\x80\x80 - \x81\x81\x81\x81"));
 
-	while (station_mode == unknown) {
+	while (station_mode == dcc_off) {
 		delay(50);
 		key = kbd.get_key();
 		switch (key) {
@@ -148,7 +148,26 @@ void loop()
 		}
 	}
 	// station_mode is set to Digital or Analog
+	dcc_control.begin(station_mode);
+	while (1) {
+		delay (100);
+		key=kbd.get_key_debounced(last);
+		if (station_mode == analog) {
+			// Analog mode
+			position = pot1.get();
+			if (position > 530) {
+				dcc_control.analog_set_speed_and_direction(position-512,forward);
+			} else if (position < 490) {
+				dcc_control.analog_set_speed_and_direction(512-position,backward);
+			} else {
+				dcc_control.analog_set_speed_and_direction(0,off);
+			}
+		} else {
+			// digital mode
+		}
 
+
+	}
 	// keypress handling
 	last=0;
 	key=kbd.get_key_debounced(last);
