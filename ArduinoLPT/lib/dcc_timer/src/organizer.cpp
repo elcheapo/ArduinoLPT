@@ -608,9 +608,11 @@ void init_organizer(void) {
 
 // Achtung: organizer läuft zur Zeit bei RUN_OKAY
 extern DCC_timer dcc_control;
+extern tmode station_mode;
 
 void run_organizer(void) {
 	message search_message;
+	if(station_mode != digital) return;
 	if (dcc_control.dcc_queue_busy()) return; // packet is not finished sending, come back later
 
 	if (send_BC_flag == 1) {

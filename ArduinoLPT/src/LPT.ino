@@ -1,16 +1,23 @@
 
+
+#include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include <Arduino.h>
-#include <io_port.h>
-#include <i2c_port.h>
-#include <relay.h>
-#include <I2C_keyboard.h>
-#include <display.h>
-#include <nokia5510.h>
-#include <dcc_timer.h>
 #include <aiguillage.h>
+#include <dcc_timer.h>
+#include <HardwareSerial.h>
+#include <i2c_port.h>
+#include <I2C_keyboard.h>
+#include <nokia5510.h>
+#include <organizer.h>
 #include <potar.h>
-#include <Wire.h>
+#include <relay.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <SPI.h>
+#include <utility/lptkbd.h>
+#include <Wire.h>
+#include <WString.h>
 
 
 I2c_Port i2c_port1(0x21);
@@ -75,13 +82,58 @@ void read_pot3(void){
 	pot3.read_A_pin();
 }
 
+/*
+  Read an integer from the keyboard interactively
+ */
+int8_t getint(Nokia5510 & lcd, I2c_Keyboard & kbd, uint16_t & value) {
+	uint8_t last = 0;
+	uint8_t key;
+	// Wait until no key is pressed
+	do {
+		delay(200);
+		key = kbd.get_key();
+	} while (key != 0);
+	value = 0;
+	while (1) {
+		lcd.print('\x83');
 
+		do {
+			delay(200);
+			key = kbd.get_key_debounced(last);
+		} while (key == 0);
+
+		switch (key) {
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		case '0':
+			value = (value*10) + (key-'0');
+			lcd.write('\b');
+			lcd.write(key);
+			break;
+		case 'D':
+			return 0;
+		case '#':
+			return -1;
+		case 'B':
+			value = value / 10;
+			lcd.print(F("\b \b\b"));
+			break;
+		}
+	}
+	return (-1);
+}
 
 //The setup function is called once at startup of the sketch
-void setup()
-{
+void setup() {
 	uint8_t i,ret;
-// Add your initialization code here
+	// Add your initialization code here
 	DIDR0 = 0x0f; // see page 257 of datasheet, disable digital pin on pin used for ADC
 	which_one = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
@@ -111,7 +163,7 @@ void setup()
 	i2c_port1.write(0xff);
 	last = 0;
 
-//	dcc_control.begin(analog);
+	//	dcc_control.begin(analog);
 
 
 }
@@ -121,110 +173,234 @@ void loop()
 {
 	uint8_t key;
 	uint16_t position;
-//Add your repeated code here
+	//Add your repeated code here
 	top_level_delay = 0;
 	delay(100);
 	// Select Analog / Digital
 	station_mode = dcc_off;
 	lcd.menu(F("            "),
-			 F(" Select     "),
-			 F(" A = Analog "),
-			 F(" B = digital"),
-			 F("  v1.00     "),
-			 F(" \x80\x80\x80\x80 - \x81\x81\x81\x81"));
+			F(" Select     "),
+			F(" A = Analog "),
+			F(" D = digital"),
+			F("  v1.00     "),
+			F(" \x80\x80\x80\x80 - \x81\x81\x81\x81"));
 
 	while (station_mode == dcc_off) {
-		delay(50);
+		delay(200);
 		key = kbd.get_key();
 		switch (key) {
 		case 'A':
 			station_mode = analog;
+			Serial.println(F("ANALOG"));
 			break;
 		case 'D':
 			station_mode = digital;
+			Serial.println(F("DIGITAL"));
 			break;
 		default:
 			break;
 		}
 	}
+	lcd.clear();
 	// station_mode is set to Digital or Analog
 	dcc_control.begin(station_mode);
-	while (1) {
-		delay (100);
-		key=kbd.get_key_debounced(last);
-		if (station_mode == analog) {
-			// Analog mode
+
+	if (station_mode == analog) {
+		uint16_t speed;
+		tdirection direction;
+		uint8_t key;
+		// Analog mode
+		while (1) {
+			Serial.write('a');
+			lcd.menu(F("            "),
+					F(" ANALOGIQUE "),
+					F(" Vit :      "),
+					F("            "),
+					F("            "),
+					F("            "));
+			delay (200);
+			key=kbd.get_key_debounced(last);
+			if (key == '*') break;
+			// Set PWM according to pot1
 			position = pot1.get();
 			if (position > 530) {
-				dcc_control.analog_set_speed_and_direction(position-512,forward);
+				speed = position-520;
+				direction= forward;
 			} else if (position < 490) {
-				dcc_control.analog_set_speed_and_direction(512-position,backward);
+				speed = 500-position;
+				direction= backward;
 			} else {
-				dcc_control.analog_set_speed_and_direction(0,off);
+				speed = 0;
+				direction = off;
 			}
-		} else {
-			// digital mode
+			dcc_control.analog_set_speed_and_direction(speed,direction);
+			lcd.go(7,2);
+			lcd.print(speed);
+			lcd.go(3,3);
+			if (direction == forward) {
+				lcd.print(F("\x81\x81\x81\x81"));
+			} else if (direction == backward) {
+				lcd.print(F("\x80\x80\x80\x80"));
+			} else {
+				lcd.print(F("----"));
+			}
 		}
-
-
-	}
-	// keypress handling
-	last=0;
-	key=kbd.get_key_debounced(last);
-	if (key != 0) {
-		Serial.write(key);
-		switch (key) {
-			case '0' ... '9': {
-				key = key - '0';
-				if (lcd.get_pseudo_led(key) == 0) {
-					lcd.pseudo_led(key,1);
-				} else {
-					lcd.pseudo_led(key,0);
-
+	} else {
+		// digital mode
+		lcd.menu(F("            "),
+				F(" DIGITAL    "),
+				F(" Adresse    "),
+				F("Loc 1:      "),
+				F("Loc 2:      "),
+				F("Loc 3:      ")
+		);
+		// Get address for Loco 1
+		while (1) {
+			int8_t ret;
+			uint16_t value;
+			locomem * loco_ptr;
+			// Enter address Loco 1
+			delay (200);
+			lcd.go(7,4);
+			ret = getint(lcd, kbd, value);
+			if (ret == 0) {
+				if (value != 0) {
+					loco_ptr= new_loco(value);
+					if (loco_ptr != NULL) loco_ptr->control_by = 1;
 				}
 				break;
-			case 'A':
-				aiguillage.set_state(s_droit);
-				break;
-			case 'B':
-				aiguillage.set_state(s_devie);
+			}
+		}
+		// Get address for Loco 2
+		while (1) {
+			int8_t ret;
+			uint16_t value;
+			locomem * loco_ptr;
+			// Enter address Loco 1
+			delay (200);
+			lcd.go(7,5);
+			ret = getint(lcd, kbd, value);
+			if (ret == 0) {
+				if (value != 0) {
+					loco_ptr= new_loco(value);
+					if (loco_ptr != NULL) loco_ptr->control_by = 2;
+				}
 				break;
 			}
-			default:
+		}
+		// Get address for Loco 3
+		while (1) {
+			int8_t ret;
+			uint16_t value;
+			locomem * loco_ptr;
+			// Enter address Loco 1
+			delay (200);
+			lcd.go(7,6);
+			ret = getint(lcd, kbd, value);
+			if (ret == 0) {
+				if (value != 0) {
+					loco_ptr= new_loco(value);
+					if (loco_ptr != NULL) loco_ptr->control_by = 3;
+				}
 				break;
+			}
+		}
+		// At this point we have up to 3 loco ready
+		// We can now read the pot values to set the speed ...
+		while (1) {
+			uint16_t position;
+			uint8_t key,speed;
+			locomem * loco_ptr;
+			Serial.write('d');
+			// Now update the display
+			lcd.menu(F("            "),
+					F(" DIGITAL    "),
+					F("Adr : Speed "),
+					F("    :       "),
+					F("    :       "),
+					F("    :       ")
+			);
+			key = kbd.get_key_debounced(last);
+			delay(200);
+			if (key == '*') break;
+			// Loco controled by pot1
+			loco_ptr = find_control(1);
+			if (loco_ptr != NULL) {
+				lcd.go(0,3);
+				lcd.print(loco_ptr->address);
+				position = pot1.get();
+				if (position > 530) {
+					speed = (position-520) >> 2;
+					loco_ptr->speed = speed;
+					lcd.go(4,3);
+					lcd.write(0x81);
+					lcd.print(speed);
+				} else if (position < 490) {
+					speed = ((position-500) >> 2) & 0x80;
+					loco_ptr->speed = speed;
+					lcd.go(4,3);
+					lcd.write(0x81);
+					lcd.print(speed & 0x7f);
+				} else {
+					loco_ptr->speed = 1;
+					lcd.go(4,3);
+					lcd.write('-');
+					lcd.print(F(" 0"));
+				}
+				loco_ptr->speed = speed;
+			}
+			// Loco controled by pot2
+			loco_ptr = find_control(2);
+			if (loco_ptr != NULL) {
+				lcd.go(0,4);
+				lcd.print(loco_ptr->address);
+				position = pot2.get();
+				if (position > 530) {
+					speed = (position-520) >> 2;
+					loco_ptr->speed = speed;
+					lcd.go(4,4);
+					lcd.write(0x81);
+					lcd.print(speed);
+				} else if (position < 490) {
+					speed = ((position-500) >> 2) & 0x80;
+					loco_ptr->speed = speed;
+					lcd.go(4,4);
+					lcd.write(0x81);
+					lcd.print(speed & 0x7f);
+				} else {
+					loco_ptr->speed = 1;
+					lcd.go(4,4);
+					lcd.write('-');
+					lcd.print(F(" 0"));
+				}
+			}				// Loco controled by pot3
+			loco_ptr = find_control(3);
+			if (loco_ptr != NULL) {
+				lcd.go(0,5);
+				lcd.print(loco_ptr->address);
+				position = pot3.get();
+				if (position > 530) {
+					speed = (position-520) >> 2;
+					loco_ptr->speed = speed;
+					lcd.go(4,5);
+					lcd.write(0x81);
+					lcd.print(speed);
+				} else if (position < 490) {
+					speed = ((position-500) >> 2) & 0x80;
+					loco_ptr->speed = speed;
+					lcd.go(4,5);
+					lcd.write(0x81);
+					lcd.print(speed & 0x7f);
+				} else {
+					loco_ptr->speed = 1;
+					lcd.go(4,5);
+					lcd.write('-');
+					lcd.print(F(" 0"));
+				}
+			}
 		}
 	}
-	// Pot handling
-	lcd.clear();
-	position = pot1.get();
-//	Serial.print(F("Pot1 = "));
-//	Serial.println(position);
-	if (position > 512) { // "Positive"
-		lcd.bar(1,(position - 512) / 13);
-	} else {
-		lcd.bar(2,(512- position) / 13);
-	}
-	position = pot2.get();
-//	Serial.print(F("Pot1 = "));
-//	Serial.println(position);
-	if (position > 512) { // "Positive"
-		lcd.bar(4,(position - 512) / 13);
-	} else {
-		lcd.bar(5,(512- position) / 13);
-	}
-	position = pot3.get();
-//	Serial.print(F("Pot1 = "));
-//	Serial.println(position);
-	if (position > 512) { // "Positive"
-		lcd.bar(7,(position - 512) / 13);
-	} else {
-		lcd.bar(8,(512- position) / 13);
-	}
-
-
 }
-
-
 
 #define NB_TASK 9
 void (*todo_in_idle[NB_TASK])() = {
@@ -241,6 +417,7 @@ void (*todo_in_idle[NB_TASK])() = {
 
 void yield(void) {
 	if (top_level_delay != 0 ) return;
+//	Serial.write('i');
 	top_level_delay++;
 	if (which_one == NB_TASK) which_one = 0;
 	// call idle task ...*

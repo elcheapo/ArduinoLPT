@@ -254,14 +254,15 @@ void Nokia5510::update(void) {
 			if (i != led_line-1																																																															){
 				gotoXY(0,i);
 				for (j=0; j< NUM_COL; j++) {
-#ifdef DEBUG
-					Serial.println();
+#ifndef DEBUG
 					Serial.write(lcd_text[i][j]);
-					Serial.print(':');
 #endif
 					lcd_print(lcd_text[i][j]);
 				}
-			}
+#ifndef DEBUG
+				Serial.println();
+#endif
+				}
 		}
 		lcd_update =0;
 	}
