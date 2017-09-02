@@ -119,7 +119,7 @@ int8_t getint(Nokia5510 & lcd, I2c_Keyboard & kbd, uint16_t & value) {
 			break;
 		case 'D':
 			return 0;
-		case '#':
+		case '*':
 			return -1;
 		case 'B':
 			value = value / 10;
@@ -211,14 +211,14 @@ void loop()
 		uint8_t key;
 		// Analog mode
 		while (1) {
-			Serial.write('a');
+//			Serial.write('a');
+			delay (200);
 			lcd.menu(F("            "),
 					F(" ANALOGIQUE "),
 					F(" Vit :      "),
 					F("            "),
 					F("            "),
 					F("            "));
-			delay (200);
 			key=kbd.get_key_debounced(last);
 			if (key == '*') break;
 			// Set PWM according to pot1
