@@ -33,7 +33,7 @@ class Nokia5510 : public Display {
 	uint8_t pin_ss;
     uint8_t pin_cd;
     uint8_t pin_rst;
-    volatile uint8_t * _lcdcs_port;
+//    volatile uint8_t * _lcdcs_port;
     void LcdWrite(uint8_t dc, uint8_t data);
     void gotoXY(uint8_t x, uint8_t y);
     void lcd_print(uint8_t character);

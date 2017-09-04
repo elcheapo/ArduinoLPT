@@ -131,7 +131,7 @@ void DCC_timer::timer_overflow_interrupt(void) {
 void DCC_timer::begin(tmode mode){
 	if (mode == digital) {
 		_doi_packet.repeat_ctr = 0;
-		// Use mode 10 (1010): PWM Phase correct top set in ICR1
+		// Use mode 10 (1010): fast PWM top set in ICR1
 		TCCR1A = 0 << WGM10| 1 << WGM11
 				| 1 << COM1A0	| 1 << COM1A1		// Inverted output on OC1A
 				| 0 << COM1B0	| 1 << COM1B1;		// Non inverted output on OC1B
@@ -145,7 +145,8 @@ void DCC_timer::begin(tmode mode){
 		TCNT1 = 0; 										// Synchronize timers
 		// Enable Timer Overflow Interrupt
 		TIMSK1 = (1<<TOIE1);
-		DDRB = T1_OCRA|T1_OCRB;
+		// Set OCRA/B pins as Output
+		// DDRB |= T1_OCRA|T1_OCRB;
 	} else { // Analog
 		TCCR1A = 1 << WGM10| 0 << WGM11			// Fast PWM  8 bit 0-FF
 				| 0 << COM1A0	| 0 << COM1A1		// PWM signal on OCRA or OCRB

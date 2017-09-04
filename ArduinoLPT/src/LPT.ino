@@ -85,7 +85,7 @@ void read_pot3(void){
 /*
   Read an integer from the keyboard interactively
  */
-int8_t getint(Nokia5510 & lcd, I2c_Keyboard & kbd, uint16_t & value) {
+int8_t getint(uint16_t & value) {
 	uint8_t last = 0;
 	uint8_t key;
 	// Wait until no key is pressed
@@ -93,13 +93,13 @@ int8_t getint(Nokia5510 & lcd, I2c_Keyboard & kbd, uint16_t & value) {
 		delay(200);
 		key = kbd.get_key();
 	} while (key != 0);
+	Serial.write('o');
 	value = 0;
 	while (1) {
 		lcd.print('\x83');
-
 		do {
-			delay(200);
 			key = kbd.get_key_debounced(last);
+			delay(200);
 		} while (key == 0);
 
 		switch (key) {
@@ -118,6 +118,9 @@ int8_t getint(Nokia5510 & lcd, I2c_Keyboard & kbd, uint16_t & value) {
 			lcd.write(key);
 			break;
 		case 'D':
+			lcd.write('\b');
+			lcd.write(' ');
+			Serial.println(value);
 			return 0;
 		case '*':
 			return -1;
@@ -140,6 +143,7 @@ void setup() {
 	Serial.begin(115200);
 	SPI.begin();
 	lcd.lcd_reset();
+	init_organizer();
 	lcd.menu(F("            "),
 			F("  LPT       "),
 			F("  Arduino   "),
@@ -247,6 +251,9 @@ void loop()
 		}
 	} else {
 		// digital mode
+		int8_t ret;
+		uint16_t value;
+		locomem * loco_ptr;
 		lcd.menu(F("            "),
 				F(" DIGITAL    "),
 				F(" Adresse    "),
@@ -254,55 +261,35 @@ void loop()
 				F("Loc 2:      "),
 				F("Loc 3:      ")
 		);
+		Serial.write('1');
+		delay(200);
 		// Get address for Loco 1
-		while (1) {
-			int8_t ret;
-			uint16_t value;
-			locomem * loco_ptr;
-			// Enter address Loco 1
-			delay (200);
-			lcd.go(7,4);
-			ret = getint(lcd, kbd, value);
-			if (ret == 0) {
-				if (value != 0) {
-					loco_ptr= new_loco(value);
-					if (loco_ptr != NULL) loco_ptr->control_by = 1;
-				}
-				break;
+		lcd.go(6,3);
+		ret = getint(value);
+		if (ret == 0) {
+			if (value != 0) {
+				loco_ptr= new_loco(value);
+				if (loco_ptr != NULL) loco_ptr->control_by = 1;
 			}
 		}
+		Serial.write('2');
 		// Get address for Loco 2
-		while (1) {
-			int8_t ret;
-			uint16_t value;
-			locomem * loco_ptr;
-			// Enter address Loco 1
-			delay (200);
-			lcd.go(7,5);
-			ret = getint(lcd, kbd, value);
-			if (ret == 0) {
-				if (value != 0) {
-					loco_ptr= new_loco(value);
-					if (loco_ptr != NULL) loco_ptr->control_by = 2;
-				}
-				break;
+		lcd.go(6,4);
+		ret = getint(value);
+		if (ret == 0) {
+			if (value != 0) {
+				loco_ptr= new_loco(value);
+				if (loco_ptr != NULL) loco_ptr->control_by = 2;
 			}
 		}
+		Serial.write('3');
 		// Get address for Loco 3
-		while (1) {
-			int8_t ret;
-			uint16_t value;
-			locomem * loco_ptr;
-			// Enter address Loco 1
-			delay (200);
-			lcd.go(7,6);
-			ret = getint(lcd, kbd, value);
-			if (ret == 0) {
-				if (value != 0) {
-					loco_ptr= new_loco(value);
-					if (loco_ptr != NULL) loco_ptr->control_by = 3;
-				}
-				break;
+		lcd.go(6,5);
+		ret = getint(value);
+		if (ret == 0) {
+			if (value != 0) {
+				loco_ptr= new_loco(value);
+				if (loco_ptr != NULL) loco_ptr->control_by = 3;
 			}
 		}
 		// At this point we have up to 3 loco ready
@@ -311,8 +298,8 @@ void loop()
 			uint16_t position;
 			uint8_t key,speed;
 			locomem * loco_ptr;
-			Serial.write('d');
 			// Now update the display
+			delay(200);
 			lcd.menu(F("            "),
 					F(" DIGITAL    "),
 					F("Adr : Speed "),
@@ -321,7 +308,6 @@ void loop()
 					F("    :       ")
 			);
 			key = kbd.get_key_debounced(last);
-			delay(200);
 			if (key == '*') break;
 			// Loco controled by pot1
 			loco_ptr = find_control(1);
@@ -336,10 +322,10 @@ void loop()
 					lcd.write(0x81);
 					lcd.print(speed);
 				} else if (position < 490) {
-					speed = ((position-500) >> 2) & 0x80;
+					speed = ((500-position) >> 2) | 0x80;
 					loco_ptr->speed = speed;
 					lcd.go(4,3);
-					lcd.write(0x81);
+					lcd.write(0x80);
 					lcd.print(speed & 0x7f);
 				} else {
 					loco_ptr->speed = 1;
@@ -362,10 +348,10 @@ void loop()
 					lcd.write(0x81);
 					lcd.print(speed);
 				} else if (position < 490) {
-					speed = ((position-500) >> 2) & 0x80;
+					speed = ((500-position) >> 2) | 0x80;
 					loco_ptr->speed = speed;
 					lcd.go(4,4);
-					lcd.write(0x81);
+					lcd.write(0x80);
 					lcd.print(speed & 0x7f);
 				} else {
 					loco_ptr->speed = 1;
@@ -373,7 +359,8 @@ void loop()
 					lcd.write('-');
 					lcd.print(F(" 0"));
 				}
-			}				// Loco controled by pot3
+			}
+			// Loco controled by pot3
 			loco_ptr = find_control(3);
 			if (loco_ptr != NULL) {
 				lcd.go(0,5);
@@ -386,10 +373,10 @@ void loop()
 					lcd.write(0x81);
 					lcd.print(speed);
 				} else if (position < 490) {
-					speed = ((position-500) >> 2) & 0x80;
+					speed = ((500-position) >> 2) | 0x80;
 					loco_ptr->speed = speed;
 					lcd.go(4,5);
-					lcd.write(0x81);
+					lcd.write(0x80);
 					lcd.print(speed & 0x7f);
 				} else {
 					loco_ptr->speed = 1;
