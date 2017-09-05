@@ -225,6 +225,15 @@ void loop()
 					F("            "));
 			key=kbd.get_key_debounced(last);
 			if (key == '*') break;
+			switch (key) {
+			case 'A':
+				aiguillage.set_state(s_droit);
+				break;
+			case 'B':
+				aiguillage.set_state(s_devie);
+				break;
+			}
+
 			// Set PWM according to pot1
 			position = pot1.get();
 			if (position > 530) {
@@ -309,6 +318,14 @@ void loop()
 			);
 			key = kbd.get_key_debounced(last);
 			if (key == '*') break;
+			switch (key) {
+			case 'A':
+				aiguillage.set_state(s_droit);
+				break;
+			case 'B':
+				aiguillage.set_state(s_devie);
+				break;
+			}
 			// Loco controled by pot1
 			loco_ptr = find_control(1);
 			if (loco_ptr != NULL) {
