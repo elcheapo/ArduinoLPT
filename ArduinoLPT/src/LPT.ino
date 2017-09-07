@@ -37,6 +37,7 @@ const relais_t relais[] PROGMEM = {
 I2c_Keyboard kbd(0x20);
 Nokia5510 lcd(6,7,8);
 DCC_timer dcc_control;
+Potar alarm(3); // Current measurement on Analog 3
 Potar pot1(2);
 Potar pot2(1);
 Potar pot3(0);
@@ -48,6 +49,7 @@ aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
 uint8_t which_one;
 uint8_t top_level_delay;
 uint8_t last;
+uint8_t current_alarm;
 
 tmode station_mode;
 
@@ -80,6 +82,18 @@ void read_pot2(void){
 }
 void read_pot3(void){
 	pot3.read_A_pin();
+}
+void alarm_current(void) {
+	/* ADC step is 5V / 1024 (10 bit resolution) = 4,88mV / Step
+	 * Current flows through a 0.22 Ohm resistor so 4.88mV / 0.22 = 22 mA
+	 * Alarm at 1.5A level = 1500/22 = 68 rounded up at 70.
+	 */
+	uint16_t current;
+	current=alarm.get();
+	if (current > 70) {
+		dcc_control.end();
+		current_alarm = 1;
+	}
 }
 
 /*
@@ -139,6 +153,7 @@ void setup() {
 	// Add your initialization code here
 	DIDR0 = 0x0f; // see page 257 of datasheet, disable digital pin on pin used for ADC
 	which_one = 0;
+	current_alarm = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
 	Serial.begin(115200);
 	SPI.begin();
@@ -215,47 +230,69 @@ void loop()
 		uint8_t key;
 		// Analog mode
 		while (1) {
-//			Serial.write('a');
+			//			Serial.write('a');
 			delay (200);
-			lcd.menu(F("            "),
-					F(" ANALOGIQUE "),
-					F(" Vit :      "),
-					F("            "),
-					F("            "),
-					F("            "));
-			key=kbd.get_key_debounced(last);
-			if (key == '*') break;
-			switch (key) {
-			case 'A':
-				aiguillage.set_state(s_droit);
-				break;
-			case 'B':
-				aiguillage.set_state(s_devie);
-				break;
-			}
+			if (current_alarm != 0) {
+				lcd.menu(F("            "),
+						F(" ANALOGIQUE "),
+						F(" COURT      "),
+						F("    CIRCUIT "),
+						F("            "),
+						F(" * : Sortie "));
+				key=kbd.get_key_debounced(last);
+				if (key == '*') {
+					current_alarm = 0;
+					break;
+				}
+			} else {
+				lcd.menu(F("            "),
+						F(" ANALOGIQUE "),
+						F(" Vit :      "),
+						F("            "),
+						F("            "),
+						F("            "));
+				key=kbd.get_key_debounced(last);
+				if (key == '*') break;
+				switch (key) {
+				case 'A':
+					aiguillage.set_state(s_droit);
+					break;
+				case 'B':
+					aiguillage.set_state(s_devie);
+					break;
+				case '0' ... '9':
+				key = key - '0';
+				if (lcd.get_pseudo_led(key) == 0) {
+					lcd.pseudo_led(key,1);
+				} else {
+					lcd.pseudo_led(key,0);
 
-			// Set PWM according to pot1
-			position = pot1.get();
-			if (position > 530) {
-				speed = position-520;
-				direction= forward;
-			} else if (position < 490) {
-				speed = 500-position;
-				direction= backward;
-			} else {
-				speed = 0;
-				direction = off;
-			}
-			dcc_control.analog_set_speed_and_direction(speed,direction);
-			lcd.go(7,2);
-			lcd.print(speed);
-			lcd.go(3,3);
-			if (direction == forward) {
-				lcd.print(F("\x81\x81\x81\x81"));
-			} else if (direction == backward) {
-				lcd.print(F("\x80\x80\x80\x80"));
-			} else {
-				lcd.print(F("----"));
+				}
+				break;
+				}
+				// Set PWM according to pot1
+				position = pot1.get();
+				if (position > 530) {
+					speed = position-520;
+					direction= forward;
+				} else if (position < 490) {
+					speed = 500-position;
+					direction= backward;
+				} else {
+					speed = 0;
+					direction = off;
+				}
+				dcc_control.analog_set_speed_and_direction(speed,direction);
+				lcd.go(7,2);
+				lcd.print(speed);
+				lcd.go(3,3);
+				if (direction == forward) {
+					lcd.print(F("\x81\x81\x81\x81"));
+				} else if (direction == backward) {
+					lcd.print(F("\x80\x80\x80\x80"));
+				} else {
+					lcd.print(F("----"));
+				}
 			}
 		}
 	} else {
@@ -309,104 +346,118 @@ void loop()
 			locomem * loco_ptr;
 			// Now update the display
 			delay(200);
-			lcd.menu(F("            "),
-					F(" DIGITAL    "),
-					F("Adr : Speed "),
-					F("    :       "),
-					F("    :       "),
-					F("    :       ")
-			);
-			key = kbd.get_key_debounced(last);
-			if (key == '*') break;
-			switch (key) {
-			case 'A':
-				aiguillage.set_state(s_droit);
-				break;
-			case 'B':
-				aiguillage.set_state(s_devie);
-				break;
-			}
-			// Loco controled by pot1
-			loco_ptr = find_control(1);
-			if (loco_ptr != NULL) {
-				lcd.go(0,3);
-				lcd.print(loco_ptr->address);
-				position = pot1.get();
-				if (position > 530) {
-					speed = (position-520) >> 2;
-					loco_ptr->speed = speed;
-					lcd.go(4,3);
-					lcd.write(0x81);
-					lcd.print(speed);
-				} else if (position < 490) {
-					speed = ((500-position) >> 2) | 0x80;
-					loco_ptr->speed = speed;
-					lcd.go(4,3);
-					lcd.write(0x80);
-					lcd.print(speed & 0x7f);
-				} else {
-					loco_ptr->speed = 1;
-					lcd.go(4,3);
-					lcd.write('-');
-					lcd.print(F(" 0"));
+			if (current_alarm != 0) {
+				lcd.menu(F("            "),
+						F(" DIGITAL    "),
+						F(" COURT      "),
+						F("    CIRCUIT "),
+						F("            "),
+						F(" * : Sortie "));
+				key=kbd.get_key_debounced(last);
+				if (key == '*') {
+					current_alarm = 0;
+					break;
 				}
-				loco_ptr->speed = speed;
-			}
-			// Loco controled by pot2
-			loco_ptr = find_control(2);
-			if (loco_ptr != NULL) {
-				lcd.go(0,4);
-				lcd.print(loco_ptr->address);
-				position = pot2.get();
-				if (position > 530) {
-					speed = (position-520) >> 2;
-					loco_ptr->speed = speed;
-					lcd.go(4,4);
-					lcd.write(0x81);
-					lcd.print(speed);
-				} else if (position < 490) {
-					speed = ((500-position) >> 2) | 0x80;
-					loco_ptr->speed = speed;
-					lcd.go(4,4);
-					lcd.write(0x80);
-					lcd.print(speed & 0x7f);
-				} else {
-					loco_ptr->speed = 1;
-					lcd.go(4,4);
-					lcd.write('-');
-					lcd.print(F(" 0"));
+			} else {
+				lcd.menu(F("            "),
+						F(" DIGITAL    "),
+						F("Adr : Speed "),
+						F("    :       "),
+						F("    :       "),
+						F("    :       ")
+				);
+				key = kbd.get_key_debounced(last);
+				if (key == '*') break;
+				switch (key) {
+				case 'A':
+					aiguillage.set_state(s_droit);
+					break;
+				case 'B':
+					aiguillage.set_state(s_devie);
+					break;
 				}
-			}
-			// Loco controled by pot3
-			loco_ptr = find_control(3);
-			if (loco_ptr != NULL) {
-				lcd.go(0,5);
-				lcd.print(loco_ptr->address);
-				position = pot3.get();
-				if (position > 530) {
-					speed = (position-520) >> 2;
+				// Loco controled by pot1
+				loco_ptr = find_control(1);
+				if (loco_ptr != NULL) {
+					lcd.go(0,3);
+					lcd.print(loco_ptr->address);
+					position = pot1.get();
+					if (position > 530) {
+						speed = (position-520) >> 2;
+						loco_ptr->speed = speed;
+						lcd.go(4,3);
+						lcd.write(0x81);
+						lcd.print(speed);
+					} else if (position < 490) {
+						speed = ((500-position) >> 2) | 0x80;
+						loco_ptr->speed = speed;
+						lcd.go(4,3);
+						lcd.write(0x80);
+						lcd.print(speed & 0x7f);
+					} else {
+						loco_ptr->speed = 1;
+						lcd.go(4,3);
+						lcd.write('-');
+						lcd.print(F(" 0"));
+					}
 					loco_ptr->speed = speed;
-					lcd.go(4,5);
-					lcd.write(0x81);
-					lcd.print(speed);
-				} else if (position < 490) {
-					speed = ((500-position) >> 2) | 0x80;
-					loco_ptr->speed = speed;
-					lcd.go(4,5);
-					lcd.write(0x80);
-					lcd.print(speed & 0x7f);
-				} else {
-					loco_ptr->speed = 1;
-					lcd.go(4,5);
-					lcd.write('-');
-					lcd.print(F(" 0"));
+				}
+				// Loco controled by pot2
+				loco_ptr = find_control(2);
+				if (loco_ptr != NULL) {
+					lcd.go(0,4);
+					lcd.print(loco_ptr->address);
+					position = pot2.get();
+					if (position > 530) {
+						speed = (position-520) >> 2;
+						loco_ptr->speed = speed;
+						lcd.go(4,4);
+						lcd.write(0x81);
+						lcd.print(speed);
+					} else if (position < 490) {
+						speed = ((500-position) >> 2) | 0x80;
+						loco_ptr->speed = speed;
+						lcd.go(4,4);
+						lcd.write(0x80);
+						lcd.print(speed & 0x7f);
+					} else {
+						loco_ptr->speed = 1;
+						lcd.go(4,4);
+						lcd.write('-');
+						lcd.print(F(" 0"));
+					}
+				}
+				// Loco controled by pot3
+				loco_ptr = find_control(3);
+				if (loco_ptr != NULL) {
+					lcd.go(0,5);
+					lcd.print(loco_ptr->address);
+					position = pot3.get();
+					if (position > 530) {
+						speed = (position-520) >> 2;
+						loco_ptr->speed = speed;
+						lcd.go(4,5);
+						lcd.write(0x81);
+						lcd.print(speed);
+					} else if (position < 490) {
+						speed = ((500-position) >> 2) | 0x80;
+						loco_ptr->speed = speed;
+						lcd.go(4,5);
+						lcd.write(0x80);
+						lcd.print(speed & 0x7f);
+					} else {
+						loco_ptr->speed = 1;
+						lcd.go(4,5);
+						lcd.write('-');
+						lcd.print(F(" 0"));
+					}
 				}
 			}
 		}
 	}
 }
 
-#define NB_TASK 9
+#define NB_TASK 10
 void (*todo_in_idle[NB_TASK])() = {
 		&scan_col_0,
 		&scan_col_1,
@@ -416,12 +467,13 @@ void (*todo_in_idle[NB_TASK])() = {
 		&read_pot1,
 		&read_pot2,
 		&read_pot3,
-		&run_organizer
+		&run_organizer,
+		&alarm_current
 };
 
 void yield(void) {
 	if (top_level_delay != 0 ) return;
-//	Serial.write('i');
+	//	Serial.write('i');
 	top_level_delay++;
 	if (which_one == NB_TASK) which_one = 0;
 	// call idle task ...*
