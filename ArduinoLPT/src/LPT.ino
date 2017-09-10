@@ -308,6 +308,7 @@ void loop()
 				F("Loc 3:      ")
 		);
 		Serial.write('1');
+		dcc_control.set_queue();
 		delay(200);
 		// Get address for Loco 1
 		lcd.go(6,3);
@@ -368,6 +369,8 @@ void loop()
 				);
 				key = kbd.get_key_debounced(last);
 				if (key == '*') break;
+				loco_ptr = find_control(1);
+				// control function for loco 1
 				switch (key) {
 				case 'A':
 					aiguillage.set_state(s_droit);
@@ -375,9 +378,56 @@ void loop()
 				case 'B':
 					aiguillage.set_state(s_devie);
 					break;
+					// Key 0 to 9 : functions 0 to 9
+				case '0' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->fl ^= 0x01; // fct 0
+					break;
+				}
+				case '1' : {
+					if (loco_ptr==NULL) break; // fct 1
+					loco_ptr->f4_f1 ^= 0x01;
+					break;
+				}
+				case '2' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f4_f1 ^= 0x02; //fct 2
+					break;
+				}
+				case '3' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f4_f1 ^= 0x04; // fct 3
+					break;
+				}
+				case '4' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f4_f1 ^= 0x08; // fct 4
+					break;
+				}
+				case '5' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f8_f5 ^= 0x01; // fct 5
+					break;
+				}
+				case '6' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f8_f5 ^= 0x02; break; // fct 6
+				}
+				case '7' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f8_f5 ^= 0x04; break; // fct 7
+				}
+				case '8' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f8_f5 ^= 0x08; break; // fct 8
+				}
+				case '9' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f12_f9 ^= 0x01; break; // fct 9
+				}
+
 				}
 				// Loco controled by pot1
-				loco_ptr = find_control(1);
 				if (loco_ptr != NULL) {
 					lcd.go(0,3);
 					lcd.print(loco_ptr->address);

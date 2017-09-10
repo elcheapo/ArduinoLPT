@@ -86,10 +86,12 @@ void DCC_timer::timer_overflow_interrupt(void) {
 		do_send0();
 		if (current_message.size == _doi_packet.ibyte)	{ // message done, goto xor
 			_doi_packet.cur_byte = _doi_packet.xor_byte;
+//			Serial.println(_doi_packet.cur_byte,16);
 			_doi_packet.state = DOI_XOR;
 			_doi_packet.bitcount = 8;
 		} else { // get next addr or data
 			_doi_packet.cur_byte = current_message.dcc[_doi_packet.ibyte++];
+//			Serial.print(_doi_packet.cur_byte,16);Serial.write(' ');
 			_doi_packet.xor_byte ^= _doi_packet.cur_byte;
 			_doi_packet.state = DOI_BYTE;
 			_doi_packet.bitcount = 8;
@@ -133,9 +135,9 @@ void DCC_timer::begin(tmode mode){
 		_doi_packet.repeat_ctr = 0;
 		// Use mode 10 (1010): fast PWM top set in ICR1
 		TCCR1A = 0 << WGM10| 1 << WGM11
-				| 1 << COM1A0	| 1 << COM1A1		// Inverted output on OC1A
-				| 0 << COM1B0	| 1 << COM1B1;		// Non inverted output on OC1B
-		TCCR1B = 1<<WGM13 | 0 << WGM12
+				| 1 << COM1A0	| 1 << COM1A1		// NonInverted output on OC1A
+				| 0 << COM1B0	| 1 << COM1B1;		// inverted output on OC1B
+		TCCR1B = 1<<WGM13 | 1 << WGM12
 				| (0<<CS12) | (0<<CS11) | (1<<CS10);// no prescaler, source = sys_clk
 
 		// start with 0's
@@ -146,7 +148,7 @@ void DCC_timer::begin(tmode mode){
 		// Enable Timer Overflow Interrupt
 		TIMSK1 = (1<<TOIE1);
 		// Set OCRA/B pins as Output
-		// DDRB |= T1_OCRA|T1_OCRB;
+		DDRB |= T1_OCRA|T1_OCRB;
 	} else { // Analog
 		TCCR1A = 1 << WGM10| 0 << WGM11			// Fast PWM  8 bit 0-FF
 				| 0 << COM1A0	| 0 << COM1A1		// PWM signal on OCRA or OCRB
