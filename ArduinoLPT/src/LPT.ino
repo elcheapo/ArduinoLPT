@@ -158,7 +158,6 @@ void setup() {
 	Serial.begin(115200);
 	SPI.begin();
 	lcd.lcd_reset();
-	init_organizer();
 	lcd.menu(F("            "),
 			F("  LPT       "),
 			F("  Arduino   "),
@@ -194,6 +193,8 @@ void loop()
 	uint16_t position;
 	//Add your repeated code here
 	top_level_delay = 0;
+	init_organizer();
+	dcc_control.end();
 	delay(100);
 	// Select Analog / Digital
 	station_mode = dcc_off;
