@@ -26,21 +26,24 @@ ISR(TIMER1_OVF_vect) {
 }
 */
 
+uint16_t next_icr;
+
 inline void DCC_timer::do_send1(void) {
-    ICR1 = (F_CPU / 1000000L) * PERIOD_1;
+    next_icr = (F_CPU / 1000000L) * PERIOD_1;
 	OCR1A = (F_CPU / 1000000L) * PERIOD_1 / 2;
 	OCR1B = (F_CPU / 1000000L) * PERIOD_1 / 2;
 }
 
 inline void DCC_timer::do_send0(void) {
-    ICR1 = (F_CPU / 1000000L) * PERIOD_0;
+    next_icr = (F_CPU / 1000000L) * PERIOD_0;
     OCR1A = (F_CPU / 1000000L) * PERIOD_0 / 2;
 	OCR1B = (F_CPU / 1000000L) * PERIOD_0 / 2;
 }
 
 
 void DCC_timer::timer_overflow_interrupt(void) {
-	// Uses timer x in fast PWM / OCRxA = TOP, OCRxB : = toggle on match, OCRxC : inverted output
+	// Uses timer x in fast PWM / ICR1A = TOP, OCRxA : = toggle on match, OCRxB : inverted output
+	ICR1=next_icr; // ICR1 is not double buffered so OCRA/B
 	switch (_doi_packet.state) {
 	case DOI_INTER_PACKET: {
 		do_send1();
@@ -141,7 +144,8 @@ void DCC_timer::begin(tmode mode){
 				| (0<<CS12) | (0<<CS11) | (1<<CS10);// no prescaler, source = sys_clk
 
 		// start with 0's
-		ICR1 = (F_CPU / 1000000L) * PERIOD_0;
+		next_icr = (F_CPU / 1000000L) * PERIOD_0;
+		ICR1 = next_icr;
 		OCR1A = (F_CPU / 1000000L) * PERIOD_0 / 2;       //Inverted output 58�s = 58*16 = 928 clocks
 		OCR1B = (F_CPU / 1000000L) * PERIOD_0 / 2;		 // Non inverted output
 		TCNT1 = 0; 										// Synchronize timers
