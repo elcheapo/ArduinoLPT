@@ -53,10 +53,21 @@ uint8_t current_alarm;
 
 tmode station_mode;
 
+#define BUZZER_PIN 3
+
 ISR(TIMER1_OVF_vect) {
 	dcc_control.timer_overflow_interrupt();
 }
+uint16_t decompte;
+ISR(TIMER0_COMPA_vect) {
+	if (decompte != 0) decompte --;
+}
 
+void buzzer_on(uint16_t ms) {
+	pinMode(BUZZER_PIN,OUTPUT);
+	digitalWrite(BUZZER_PIN, 1);
+	decompte = ms;
+}
 // List of functions for helpers
 
 void scan_col_0(void) {
@@ -95,6 +106,10 @@ void alarm_current(void) {
 		current_alarm = 1;
 	}
 }
+void stop_buzzer(void) {
+	if (decompte == 0) 	digitalWrite(BUZZER_PIN, 0);
+}
+
 
 /*
   Read an integer from the keyboard interactively
@@ -152,6 +167,8 @@ void setup() {
 	uint8_t i,ret;
 	// Add your initialization code here
 	DIDR0 = 0x0f; // see page 257 of datasheet, disable digital pin on pin used for ADC
+	OCR0A = 0x80; // interrupt every ms on timer 0
+	TIMSK0 |= 1<<OCIE0A;
 	which_one = 0;
 	current_alarm = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
@@ -270,6 +287,9 @@ void loop()
 
 				}
 				break;
+				case '#':
+					buzzer_on(1000);
+					break;
 				}
 				// Set PWM according to pot1
 				position = pot1.get();
@@ -508,7 +528,7 @@ void loop()
 	}
 }
 
-#define NB_TASK 10
+#define NB_TASK 11
 void (*todo_in_idle[NB_TASK])() = {
 		&scan_col_0,
 		&scan_col_1,
@@ -519,7 +539,8 @@ void (*todo_in_idle[NB_TASK])() = {
 		&read_pot2,
 		&read_pot3,
 		&run_organizer,
-		&alarm_current
+		&alarm_current,
+		&stop_buzzer
 };
 
 void yield(void) {
