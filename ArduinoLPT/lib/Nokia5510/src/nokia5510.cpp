@@ -186,7 +186,7 @@ void Nokia5510::low_level_clear(void) {
 
 void Nokia5510::begin(void) {
 	LcdWrite( LCD_C, 0x21 );  // LCD Extended Commands.
-	LcdWrite( LCD_C, 0xBf );  // Set LCD Vop (Contrast). //B1
+	LcdWrite( LCD_C, 0xB1 );  // Set LCD Vop (Contrast). //B1
 	LcdWrite( LCD_C, 0x04 );  // Set Temp coefficent. //0x04
 	LcdWrite( LCD_C, 0x14 );  // LCD bias mode 1:48. //0x13
 	LcdWrite( LCD_C, 0x20);	// Normal commands

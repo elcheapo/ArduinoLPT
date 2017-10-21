@@ -17,6 +17,7 @@ class Io_Port {
     virtual void clear_mask (uint8_t mask);
     virtual void set_mask (uint8_t mask);
     virtual uint8_t read (void);
+    virtual void set_input(uint8_t mask);
 };
 
 

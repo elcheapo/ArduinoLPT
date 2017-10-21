@@ -54,4 +54,6 @@ uint8_t I2c_Port::read (void) {
 	return current_value;
 }
 
+void I2C_Port::set_input(uint8_t mask) {
 
+}

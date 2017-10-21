@@ -22,9 +22,9 @@ I2c_Keyboard::I2c_Keyboard(uint8_t _i2c_address) : Lptkbd() {
 
 void I2c_Keyboard::scan(void) {
 	uint8_t i,temp,ret;
-	// Keyboard connection is 	C3 C2 C1 L4 L3 L2 L1 C4
+	// Keyboard connection is 	C4 C3 C2 C1 L4 L3 L2 L1
 	// I2C Pin					P7 P6 P5 P4 P3 P2 P1 P0
-	const uint8_t col_drive[]={ 0xdf, 0xbf, 0x7f, 0xfe };
+	const uint8_t col_drive[]={ 0xef, 0xdf, 0xbf, 0x7f };
 
 	for (i=0; i<4; i++) {
 		// scan column 1
@@ -48,7 +48,7 @@ void I2c_Keyboard::scan(void) {
 			Serial.write('.');
 		}
 #endif
-		column[i] = ((temp >> 1) & 0x0f) ^ 0x0f; // 0000 L4 L3 L2 L1 format
+		column[i] = (temp & 0x0f) ^ 0x0f; // 0000 L4 L3 L2 L1 format
 	}
 #ifdef DEBUG
 	Serial.println();
@@ -58,9 +58,9 @@ void I2c_Keyboard::scan(void) {
 
 void I2c_Keyboard::scan_col(uint8_t col) {
 	uint8_t temp,ret;
-	// Keyboard connection is 	C3 C2 C1 L4 L3 L2 L1 C4
+	// Keyboard connection is 	C4 C3 C2 C1 L4 L3 L2 L1
 	// I2C Pin					P7 P6 P5 P4 P3 P2 P1 P0
-	const uint8_t col_drive[]={ 0xdf, 0xbf, 0x7f, 0xfe };
+	const uint8_t col_drive[]={ 0xef, 0xdf, 0xbf, 0x7f };
 
 	// scan column col
 	Wire.beginTransmission(i2c_address); // transmit to PCF8574
@@ -70,7 +70,7 @@ void I2c_Keyboard::scan_col(uint8_t col) {
 	Wire.requestFrom(i2c_address, 1);
 	if ( Wire.available() !=0 ) {
 		temp = Wire.read();
-		column[col] = ((temp >> 1) & 0x0f) ^ 0x0f; // 0000 L4 L3 L2 L1 format
+		column[col] = (temp & 0x0f) ^ 0x0f; // 0000 L4 L3 L2 L1 format
 	}
 }
 

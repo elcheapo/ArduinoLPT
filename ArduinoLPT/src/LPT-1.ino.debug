@@ -35,7 +35,7 @@ Potar pot2(1);
 Potar pot3(0);
 aiguille aiguillage(&relais[1],&relais[0],t_peco); // Aiguillage type Peco
 
-
+uint8_t station_mode;
 
 /* things to do */
 uint8_t which_one;

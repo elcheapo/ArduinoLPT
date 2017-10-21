@@ -14,6 +14,7 @@ class I2c_Port : public Io_Port {
   private:
 	uint8_t i2c_address;
 	uint8_t current_value;
+	uint8_t input_mask;
 
   protected:
 
@@ -23,7 +24,7 @@ class I2c_Port : public Io_Port {
     void clear_mask (uint8_t mask);
     void set_mask (uint8_t mask);
     uint8_t read (void);
-
+    void set_input(uint8_t mask);
 };
 
 
