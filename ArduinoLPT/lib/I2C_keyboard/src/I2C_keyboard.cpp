@@ -34,7 +34,7 @@ void I2c_Keyboard::scan(void) {
 //#ifdef DEBUG
 		if (ret != 0) Serial.print(F("NoACK"));
 //#endif
-		Wire.requestFrom(i2c_address, 1);
+		Wire.requestFrom(i2c_address, (uint8_t)1);
 		if ( Wire.available() !=0 ) {
 			temp = Wire.read();
 		}
