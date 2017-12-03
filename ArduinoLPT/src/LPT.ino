@@ -19,8 +19,10 @@
 #include <Wire.h>
 #include <WString.h>
 
+#if 0
+//I2c_Port i2c_port1(0x21);
+//I2c_Port feux(0x22);
 
-I2c_Port i2c_port1(0x21);
 
 const relais_t relais[] PROGMEM = {
 		{&i2c_port1, 0x01, 1} //
@@ -32,18 +34,20 @@ const relais_t relais[] PROGMEM = {
 		,{&i2c_port1, 0x20, 0} //
 		,{&i2c_port1, 0x10, 0} //
 };
+#endif
 
-
-I2c_Keyboard kbd(0x20);
-Nokia5510 lcd(6,7,8);
+//I2c_Keyboard kbd(0x20);
+I2c_Keyboard kbd(0x38);
+//Nokia5510 lcd(6,7,8);
+Nokia5510 lcd(6,8,7);
 DCC_timer dcc_control;
-Potar alarm(3); // Current measurement on Analog 3
-Potar pot1(2);
-Potar pot2(1);
-Potar pot3(0);
-aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
+Potar alarm(2); // Current measurement on Analog 3
+Potar pot1(1);
+Potar pot2(0);
+//Potar pot3(0);
+//aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
 
-
+SPISettings fastSPI(8000000, MSBFIRST, SPI_MODE0);
 
 /* things to do */
 uint8_t which_one;
@@ -91,9 +95,11 @@ void read_pot1(void){
 void read_pot2(void){
 	pot2.read_A_pin();
 }
+#if 0
 void read_pot3(void){
 	pot3.read_A_pin();
 }
+#endif
 void alarm_current(void) {
 	/* ADC step is 5V / 1024 (10 bit resolution) = 4,88mV / Step
 	 * Current flows through a 0.22 Ohm resistor so 4.88mV / 0.22 = 22 mA
@@ -195,7 +201,7 @@ void setup() {
 		}
 	}
 	Serial.println(F("Done"));
-	i2c_port1.write(0xff);
+//	i2c_port1.write(0xff);
 	last = 0;
 
 	//	dcc_control.begin(analog);
@@ -272,12 +278,14 @@ void loop()
 				key=kbd.get_key_debounced(last);
 				if (key == '*') break;
 				switch (key) {
+#if 0
 				case 'A':
 					aiguillage.set_state(s_droit);
 					break;
 				case 'B':
 					aiguillage.set_state(s_devie);
 					break;
+#endif
 				case '0' ... '9':
 				key = key - '0';
 				if (lcd.get_pseudo_led(key) == 0) {
@@ -393,12 +401,14 @@ void loop()
 				loco_ptr = find_control(1);
 				// control function for loco 1
 				switch (key) {
+#if 0
 				case 'A':
 					aiguillage.set_state(s_droit);
 					break;
 				case 'B':
 					aiguillage.set_state(s_devie);
 					break;
+#endif
 					// Key 0 to 9 : functions 0 to 9
 				case '0' : {
 					if (loco_ptr==NULL) break;
@@ -498,6 +508,7 @@ void loop()
 						lcd.print(F(" 0"));
 					}
 				}
+#if 0
 				// Loco controled by pot3
 				loco_ptr = find_control(3);
 				if (loco_ptr != NULL) {
@@ -523,12 +534,13 @@ void loop()
 						lcd.print(F(" 0"));
 					}
 				}
+#endif
 			}
 		}
 	}
 }
 
-#define NB_TASK 11
+#define NB_TASK 10
 void (*todo_in_idle[NB_TASK])() = {
 		&scan_col_0,
 		&scan_col_1,
@@ -537,7 +549,7 @@ void (*todo_in_idle[NB_TASK])() = {
 		&update_lcd,
 		&read_pot1,
 		&read_pot2,
-		&read_pot3,
+//		&read_pot3,
 		&run_organizer,
 		&alarm_current,
 		&stop_buzzer
