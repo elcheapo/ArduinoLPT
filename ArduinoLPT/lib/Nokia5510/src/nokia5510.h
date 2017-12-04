@@ -11,10 +11,6 @@
 #include "Print.h"
 #include "display.h"
 
-#define PIN_SS 6
-#define PIN_DC 7
-#define PIN_RST 8
-
 /*
 This Code has extra features
 including a XY positioning function on Display

@@ -3,6 +3,7 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <Arduino.h>
+#include "config.h"
 #include <aiguillage.h>
 #include <dcc_timer.h>
 #include <HardwareSerial.h>
@@ -39,7 +40,8 @@ const relais_t relais[] PROGMEM = {
 //I2c_Keyboard kbd(0x20);
 I2c_Keyboard kbd(0x38);
 //Nokia5510 lcd(6,7,8);
-Nokia5510 lcd(6,8,7);
+//Nokia5510 lcd(6,8,7);
+Nokia5510 lcd(PIN_SS, PIN_CD,0);
 DCC_timer dcc_control;
 Potar alarm(2); // Current measurement on Analog 3
 Potar pot1(1);

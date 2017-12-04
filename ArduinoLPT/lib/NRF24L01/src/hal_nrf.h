@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "elcheapo_remote.h"
+#include "Arduino.h"
 
 #include "hal_nrf_reg.h"
 #include "hal_nrf_hw.h"

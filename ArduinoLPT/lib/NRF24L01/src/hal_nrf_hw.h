@@ -20,52 +20,56 @@
 #ifndef HAL_NRF_HW_H__
 #define HAL_NRF_HW_H__
 
+#include <Arduino.h>
+#include "config.h"
+
 #include "nordic_common.h"
 #include "hal_nrf.h"
 
 inline uint8_t hal_nrf_rw(uint8_t value){
-	uint8_t data;
-	SPDR = value;
-	while ((SPSR & (1<<SPIF)) == 0);
-	data= SPDR; /* Clear SPIF */
-	return data;
+	return SPI.transfer(value);
 }
 
+#if 0
 inline void hal_spi_init(uint32_t spi_speed){
 	DDRB |= (1<<PB_NRF_CSN);
 	PORTB |= (1<<PB_NRF_CSN); // Set chip select High
 	SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
 	SPSR = (1<<SPI2X);
 }
-
+#endif
 // See config.h for hardware definition
 
 /** Macro that set radio's CSN line LOW.
  *
  */
 inline void CSN_LOW(void) {
-	PORTB &= ~(1<<PB_NRF_CSN);
+	digitalWrite(PIN_CSN, LOW);
+//	PORTB &= ~(1<<PB_NRF_CSN);
 }
 
 /** Macro that set radio's CSN line HIGH.
  *
  */
 inline void CSN_HIGH(void){
-	PORTB |= (1<<PB_NRF_CSN);
+	digitalWrite(PIN_CSN, HIGH);
+//	PORTB |= (1<<PB_NRF_CSN);
 }
 
 /** Macro that set radio's CE line LOW.
  *
  */
 inline void CE_LOW(void) {
-	PORTD &= ~(1<<PD_NRF_CE);
+	digitalWrite(PIN_CE, LOW);
+//	PORTD &= ~(1<<PD_NRF_CE);
 }
 
 /** Macro that set radio's CE line HIGH.
  *
  */
 inline void CE_HIGH(void) {
-	PORTD |= (1<<PD_NRF_CE);
+	digitalWrite(PIN_CE, HIGH);
+//	PORTD |= (1<<PD_NRF_CE);
 }
 
 /**

@@ -21,10 +21,9 @@
  * @author Per Kristian Schanke
  */
 
-#include "elcheapo_remote.h"
+#include "Arduino.h"
 
 #include "hal_nrf.h"
-#include "timer0.h"
 
 #include "radio.h"
 
@@ -46,15 +45,15 @@ void radio_send_packet_no_ack(uint8_t *packet, uint8_t length) {
 /* For Elcheapo Nano Station */
 
 /** The address of the radio. Parameter to the radio init LSB first */
-const uint8_t NRF_address1[HAL_NRF_AW_5BYTES] = {0xaa,'u','a','l','C'};
-const uint8_t NRF_address2[HAL_NRF_AW_5BYTES] = {0x5a,'u','a','l','C'}; // Existing remote 1
+const uint8_t NRF_address1[HAL_NRF_AW_5BYTES] = {0xaa,'s','r','a','M'};
+const uint8_t NRF_address2[HAL_NRF_AW_5BYTES] = {0x5a,'s','r','r','M'}; // Existing remote 1
 const uint8_t NRF_address3 = 0x55; // Existing remote 2
 const uint8_t NRF_address4 = 0xa5; // Existing remote 3
 
 
 
 uint8_t radio_pl_init_prx (void) {
-	hal_spi_init(8000000);						// Init SPI at 8 MHz
+//	hal_spi_init(8000000);						// Init SPI at 8 MHz
 	CE_LOW();        // Set Chip Enable (CE) pin low during chip init
 
 	hal_nrf_write_reg(EN_RXADDR, 0);	 // First close all radio pipes
