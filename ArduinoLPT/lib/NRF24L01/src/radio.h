@@ -14,6 +14,8 @@
 #ifndef RADIO_H__
 #define RADIO_H__
  
+#include "hal_nrf_reg.h"
+#include "hal_nrf.h"
  /** @file
  * @ingroup main
  * Radio header file for the nRF24LU1 example application

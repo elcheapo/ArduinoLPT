@@ -24,7 +24,6 @@
 #include "Arduino.h"
 #include <SPI.h>
 #include "../../../src/config.h"
-#include "hal_nrf.h"
 #include "radio.h"
 
 
