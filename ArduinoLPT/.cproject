@@ -26,27 +26,29 @@
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\cores\arduino"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\variants\standard"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\NRF24L01\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Io_port\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Relay\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Aiguillage\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Aiguillage\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Io_port\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\NRF24L01\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Relay\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\EEPROM\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\HID\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SoftwareSerial\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Adafruit_CircuitPlayground"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Adafruit_CircuitPlayground\utility"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Bridge\src"/>
@@ -75,7 +77,7 @@
 									<listOptionValue builtIn="false" value="PLATFORMIO=30500"/>
 									<listOptionValue builtIn="false" value="ARDUINO_ARCH_AVR"/>
 									<listOptionValue builtIn="false" value="ARDUINO_AVR_UNO"/>
-									<listOptionValue builtIn="false" value="ARDUINO=10619"/>
+									<listOptionValue builtIn="false" value="ARDUINO=10620"/>
 									<listOptionValue builtIn="false" value="__AVR_ATmega328P__"/>
 								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.149990277" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
@@ -85,27 +87,29 @@
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\cores\arduino"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\variants\standard"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\NRF24L01\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Io_port\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Relay\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Aiguillage\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Aiguillage\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Io_port\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\NRF24L01\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Relay\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\EEPROM\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\HID\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SoftwareSerial\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Adafruit_CircuitPlayground"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Adafruit_CircuitPlayground\utility"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Bridge\src"/>
@@ -134,7 +138,7 @@
 									<listOptionValue builtIn="false" value="PLATFORMIO=30500"/>
 									<listOptionValue builtIn="false" value="ARDUINO_ARCH_AVR"/>
 									<listOptionValue builtIn="false" value="ARDUINO_AVR_UNO"/>
-									<listOptionValue builtIn="false" value="ARDUINO=10619"/>
+									<listOptionValue builtIn="false" value="ARDUINO=10620"/>
 									<listOptionValue builtIn="false" value="__AVR_ATmega328P__"/>
 								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.762536863" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
@@ -144,27 +148,29 @@
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\cores\arduino"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\variants\standard"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\NRF24L01\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Io_port\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Relay\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Aiguillage\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Aiguillage\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\I2C_keyboard\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Io_port\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\NRF24L01\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Nokia5510\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\Relay\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\dcc_timer\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\git\ArduinoLPT\ArduinoLPT\lib\potar\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
+									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\EEPROM\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\HID\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SPI\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\SoftwareSerial\src"/>
-									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\__cores__\arduino\Wire\src"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Adafruit_CircuitPlayground"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Adafruit_CircuitPlayground\utility"/>
 									<listOptionValue builtIn="false" value="${USERPROFILE}\.platformio\packages\framework-arduinoavr\libraries\Bridge\src"/>
@@ -193,7 +199,7 @@
 									<listOptionValue builtIn="false" value="PLATFORMIO=30500"/>
 									<listOptionValue builtIn="false" value="ARDUINO_ARCH_AVR"/>
 									<listOptionValue builtIn="false" value="ARDUINO_AVR_UNO"/>
-									<listOptionValue builtIn="false" value="ARDUINO=10619"/>
+									<listOptionValue builtIn="false" value="ARDUINO=10620"/>
 									<listOptionValue builtIn="false" value="__AVR_ATmega328P__"/>
 								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.549319812" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
