@@ -21,7 +21,8 @@
 #define HAL_NRF_HW_H__
 
 #include <Arduino.h>
-#include "config.h"
+#include <SPI.h>
+#include "../../../src/config.h"
 
 #include "nordic_common.h"
 #include "hal_nrf.h"

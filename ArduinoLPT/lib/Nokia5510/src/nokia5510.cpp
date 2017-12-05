@@ -150,13 +150,13 @@ static const PROGMEM uint8_t LED_STATE[][8] = {
 void Nokia5510::lcd_reset(void) {
 	pinMode(pin_ss,OUTPUT);
 	pinMode(pin_cd,OUTPUT);
-	if (pin_trst != 0) {
+	if (pin_rst != 0) {
 		pinMode(pin_rst,OUTPUT);
 	}
 
 	digitalWrite(pin_ss, 1);
 	digitalWrite(pin_cd, 1);
-	if (pin_trst != 0) {
+	if (pin_rst != 0) {
 		digitalWrite(pin_rst, 0); // Reset LCD
 		delay(2);
 		digitalWrite(pin_rst, 1); // Release LCD Reset

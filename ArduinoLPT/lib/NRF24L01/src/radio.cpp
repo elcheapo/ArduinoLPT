@@ -53,7 +53,7 @@ const uint8_t NRF_address4 = 0xa5; // Existing remote 3
 
 
 uint8_t radio_pl_init_prx (void) {
-//	hal_spi_init(8000000);						// Init SPI at 8 MHz
+	//	hal_spi_init(8000000);						// Init SPI at 8 MHz
 	CE_LOW();        // Set Chip Enable (CE) pin low during chip init
 
 	hal_nrf_write_reg(EN_RXADDR, 0);	 // First close all radio pipes
@@ -86,7 +86,7 @@ uint8_t radio_pl_init_prx (void) {
 	hal_nrf_write_reg(FEATURE, 0x07);  // Enable dynamic payload, enable ack payload
 	hal_nrf_write_reg(CONFIG, 0b00001111);
 	// IRQ on, EN_CRC, 2 bytes CRC, PWR UP, PRX
-	wait_tempo(2);
+	delay(2);
 	hal_nrf_write_reg(STATUS, 0x70);			// Clear pending IRQ
 	hal_nrf_flush_tx(); 						// flush tx fifo, to start clean
 	return hal_nrf_get_status();
@@ -99,31 +99,28 @@ uint8_t radio_pl_init_prx (void) {
 uint8_t radio_get_packet(uint8_t * packet, uint8_t & count, uint8_t & radio_id) {
 	uint8_t status, fifo_status;
 
-	if (radio_activity()) {
-		status = hal_nrf_get_status();
-		fifo_status = hal_nrf_read_reg(FIFO_STATUS);
-		if ((fifo_status & 0x01) == 0) { // a packet is available
-			// get it
-			count = hal_nrf_read_reg(R_RX_PL_WID);
-			if (( count > 32) || (count == 0)) {
-				hal_nrf_flush_rx();
-				hal_nrf_get_clear_irq_flags();
-				return NOK;
-			} else {
-				radio_id = (status & 0x0f) >> 1;
-				hal_nrf_read_multibyte_reg(R_RX_PAYLOAD, packet, count);
-				// clear IRQ source
-				hal_nrf_get_clear_irq_flags();
-				return OK;
-			}
-		} else if ((status & (1<<HAL_NRF_MAX_RT)) != 0 ) { // Max Retry, flush TX
-			hal_nrf_flush_tx(); 		// flush tx fifo, avoid fifo jam
+	fifo_status = hal_nrf_read_reg(FIFO_STATUS);
+	if ((fifo_status & 0x01) == 0) { // a packet is available
+		// get it
+		count = hal_nrf_read_reg(R_RX_PL_WID);
+		if (( count > 32) || (count == 0)) {
+			hal_nrf_flush_rx();
 			hal_nrf_get_clear_irq_flags();
-			return NOK;
-			// TO BE CHECKED .... but does not seem to happen ...
-		};
+			return false;
+		} else {
+			status = hal_nrf_get_status();
+			radio_id = (status & 0x0f) >> 1;
+			hal_nrf_read_multibyte_reg(R_RX_PAYLOAD, packet, count);
+			// clear IRQ source
+			hal_nrf_get_clear_irq_flags();
+			return true;
+		}
+	} else if ((status & (1<<HAL_NRF_MAX_RT)) != 0 ) { // Max Retry, flush TX
+		hal_nrf_flush_tx(); 		// flush tx fifo, avoid fifo jam
 		hal_nrf_get_clear_irq_flags();
-	}
-	return NOK;
+		return false;
+		// TO BE CHECKED .... but does not seem to happen ...
+	};
+	return false;
 }
 

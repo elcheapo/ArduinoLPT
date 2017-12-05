@@ -19,6 +19,7 @@
 #include <utility/lptkbd.h>
 #include <Wire.h>
 #include <WString.h>
+#include "radio.h"
 
 #if 0
 //I2c_Port i2c_port1(0x21);
@@ -172,7 +173,7 @@ int8_t getint(uint16_t & value) {
 
 //The setup function is called once at startup of the sketch
 void setup() {
-	uint8_t i,ret;
+	uint8_t i,ret,status;
 	// Add your initialization code here
 	DIDR0 = 0x0f; // see page 257 of datasheet, disable digital pin on pin used for ADC
 	OCR0A = 0x80; // interrupt every ms on timer 0
@@ -203,6 +204,14 @@ void setup() {
 		}
 	}
 	Serial.println(F("Done"));
+	status = radio_pl_init_prx();
+	if ((status & 0x80) == 0) {
+		Serial.println(F("Radio OK"));
+	} else {
+		while (1);
+		// If higher bit of radio status is not 0 - we have a wiring issue ...
+	}
+
 //	i2c_port1.write(0xff);
 	last = 0;
 

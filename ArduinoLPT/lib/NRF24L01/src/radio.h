@@ -65,7 +65,7 @@ typedef enum {
  * @param length The length of the data
 */
 void radio_send_packet(uint8_t *packet, uint8_t length);
-void radio_send_packet_no_ack(uint8_t *packet, uint8_t length);
+//void radio_send_packet_no_ack(uint8_t *packet, uint8_t length);
 
 /** For turning on dynamic payload on all pipes. Sets bits 0-6 */
 #define ALL_PIPES (0x3F)
@@ -78,21 +78,6 @@ void radio_send_packet_no_ack(uint8_t *packet, uint8_t length);
  * @param operational_mode The operational mode, either @c HAL_NRF_PRX or @c HAL_NRF_PTX
  */
 uint8_t radio_pl_init_prx (void);
-
-
-/** This function reads the interrupts. It does the work
- * of a interrupt handler by manually reading the interrupt
- * flags and act on them.
- */
-//void radio_irq (void);
-
-inline uint8_t radio_activity(void) {
-	if ( (PIND & (1<<PD_NRF_IRQ)) == 0)
-		return true;
-	else
-		return false;
-}
-
 
 uint8_t radio_get_packet(uint8_t * packet, uint8_t & count, uint8_t & radio_id);
 
