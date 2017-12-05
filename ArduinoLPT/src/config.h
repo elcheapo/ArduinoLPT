@@ -1,7 +1,7 @@
 /*
  * config.h
  *
- *  Created on: 4 déc. 2017
+ *  Created on: 4 dï¿½c. 2017
  *      Author: florrain
  */
 
@@ -11,12 +11,12 @@
 
 #define BUZZER_PIN 3
 //Radio defines
-#define PIN_CSN 8
-#define PIN_CE	5
+#define PIN_CSN 3
+#define PIN_CE	4
 // LCD display pins
+#define PIN_RST 5
 #define PIN_SS 6
-#define PIN_DC 7 // 8
-//#define PIN_RST 7
+#define PIN_DC 7
 
 
 

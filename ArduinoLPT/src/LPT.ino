@@ -40,9 +40,7 @@ const relais_t relais[] PROGMEM = {
 
 //I2c_Keyboard kbd(0x20);
 I2c_Keyboard kbd(0x38);
-//Nokia5510 lcd(6,7,8);
-//Nokia5510 lcd(6,8,7);
-Nokia5510 lcd(PIN_SS, PIN_DC,0);
+Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
 DCC_timer dcc_control;
 Potar alarm(2); // Current measurement on Analog 3
 Potar pot1(1);
@@ -50,7 +48,7 @@ Potar pot2(0);
 //Potar pot3(0);
 //aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
 
-SPISettings fastSPI(8000000, MSBFIRST, SPI_MODE0);
+//SPISettings fastSPI(8000000, MSBFIRST, SPI_MODE0);
 
 /* things to do */
 uint8_t which_one;
@@ -99,6 +97,8 @@ void setup() {
 	if ((status & 0x80) == 0) {
 		Serial.println(F("Radio OK"));
 	} else {
+		Serial.print(F("Radio NOT OK : 0x"));
+		Serial.println(status,16);
 		while (1);
 		// If higher bit of radio status is not 0 - we have a wiring issue ...
 	}

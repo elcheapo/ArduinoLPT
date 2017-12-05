@@ -52,6 +52,9 @@ const uint8_t NRF_address4 = 0xa5; // Existing remote 3
 
 
 uint8_t radio_pl_init_prx (void) {
+	pinMode(PIN_CSN,OUTPUT);
+	pinMode(PIN_CE,OUTPUT);
+
 	//	hal_spi_init(8000000);						// Init SPI at 8 MHz
 	CE_LOW();        // Set Chip Enable (CE) pin low during chip init
 
