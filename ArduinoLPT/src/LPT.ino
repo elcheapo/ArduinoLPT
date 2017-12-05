@@ -60,7 +60,7 @@ uint8_t current_alarm;
 
 tmode station_mode;
 
-#define BUZZER_PIN 3
+
 
 ISR(TIMER1_OVF_vect) {
 	dcc_control.timer_overflow_interrupt();

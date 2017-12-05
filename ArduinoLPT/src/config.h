@@ -7,6 +7,9 @@
 
 #ifndef SRC_CONFIG_H_
 #define SRC_CONFIG_H_
+
+
+#define BUZZER_PIN 3
 //Radio defines
 #define PIN_CSN 8
 #define PIN_CE	5

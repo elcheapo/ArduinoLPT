@@ -20,13 +20,6 @@
 #ifndef HAL_NRF_HW_H__
 #define HAL_NRF_HW_H__
 
-#include <Arduino.h>
-#include <SPI.h>
-#include "../../../src/config.h"
-
-#include "nordic_common.h"
-#include "hal_nrf.h"
-
 inline uint8_t hal_nrf_rw(uint8_t value){
 	return SPI.transfer(value);
 }
