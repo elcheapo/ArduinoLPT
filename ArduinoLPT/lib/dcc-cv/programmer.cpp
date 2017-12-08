@@ -199,9 +199,10 @@ int8_t programmer(message * prog_message) {
     timer->digital_on(); // activate program tracks
     // First send 20 resets to prime including 3 for direct mode ...
     DCC_Reset.repeat = 20;
-    xSemaphoreTake(timer->packet_sent,0); // Make sure we clear the packet_sent semaphore
+//    xSemaphoreTake(timer->packet_sent,0); // Make sure we clear the packet_sent semaphore
+    while (timer->packet_ready != 0);
     timer->send_direct_dcc_packet(&DCC_Reset);
-    xSemaphoreTake(timer->packet_sent, 2000 / portTICK_RATE_MS);
+//    xSemaphoreTake(timer->packet_sent, 2000 / portTICK_RATE_MS);
     DCC_Reset.repeat = 1;
 #ifdef DEBUG_UART3
 	Serial3.println(F("DCC_Reset sent"));

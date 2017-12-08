@@ -130,20 +130,18 @@ void loop()
 			F(" D = digital"),
 			F(" \x80\x80\x80\x80 - \x81\x81\x81\x81"));
 
-	while (station_mode == dcc_off) {
+	key = 0;
+	while (key == 0) {
 		delay(200);
 		key = kbd.get_key();
 		switch (key) {
 		case 'A':
-			station_mode = analog;
 			Serial.println(F("ANALOG"));
 			break;
 		case 'B':
-			station_mode = read_adr;
 			Serial.println(F("READ ADDRESS"));
 			break;
 		case 'D':
-			station_mode = digital;
 			Serial.println(F("DIGITAL"));
 			break;
 		default:
@@ -152,14 +150,15 @@ void loop()
 	}
 	lcd.clear();
 
-	switch (station_mode) {
+	switch (key) {
 	// station_mode is set to Digital or Analog
 
-	case analog: {
+	case 'A': {
 		uint16_t speed;
 		tdirection direction;
 		uint8_t key;
 		// Analog mode
+		station_mode = analog;
 		dcc_control.begin(analog);
 		while (1) {
 			//			Serial.write('a');
@@ -234,11 +233,12 @@ void loop()
 		}
 		break;
 	}
-	case digital : {
+	case 'D' : {
 		// digital mode
 		int8_t ret;
 		uint16_t value;
 		locomem * loco_ptr;
+		station_mode = digital;
 		dcc_control.begin(digital);
 		lcd.menu(F("            "),
 				F(" DIGITAL    "),
@@ -450,7 +450,7 @@ void loop()
 		}
 		break;
 	}
-	case read_adr: {
+	case 'B': {
 	break;
 	}
 	default:

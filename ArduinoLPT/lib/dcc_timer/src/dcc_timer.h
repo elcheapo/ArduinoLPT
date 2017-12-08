@@ -21,7 +21,7 @@
 #define DOI_INTER_PACKET (5)
 #define DOI_LAST_BIT (6)
 
-typedef enum {dcc_off, analog, digital, read_adr} tmode;
+typedef enum {dcc_off, analog, digital} tmode;
 typedef enum {off, forward, backward} tdirection;
 
 typedef struct {
