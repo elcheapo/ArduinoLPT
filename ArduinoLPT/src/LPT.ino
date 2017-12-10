@@ -20,6 +20,7 @@
 #include <Wire.h>
 #include <WString.h>
 #include "radio.h"
+#include "programmer.h"
 
 #if 0
 //I2c_Port i2c_port1(0x21);
@@ -42,9 +43,9 @@ const relais_t relais[] PROGMEM = {
 I2c_Keyboard kbd(0x38);
 Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
 DCC_timer dcc_control;
-Potar alarm(2); // Current measurement on Analog 3
+Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
 Potar pot1(1);
-Potar pot2(0);
+//Potar pot2(0);
 //Potar pot3(0);
 //aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
 
@@ -64,8 +65,13 @@ tmode station_mode;
 void setup() {
 	uint8_t i,ret,status;
 	// Add your initialization code here
-	DIDR0 = 0x0f; // see page 257 of datasheet, disable digital pin on pin used for ADC
+	DIDR0 = 0x03; // see page 257 of datasheet, disable digital pin on pin used for ADC
 	OCR0A = 0x80; // interrupt every ms on timer 0
+	PRR=0; // all peripheral activated
+	pinMode(A2, OUTPUT);
+	digitalWrite(A2,LOW);
+	pinMode(A3, OUTPUT);
+	digitalWrite(A3,LOW);
 	TIMSK0 |= 1<<OCIE0A;
 	which_one = 0;
 	current_alarm = 0;
@@ -120,6 +126,7 @@ void loop()
 	top_level_delay = 0;
 	init_organizer();
 	dcc_control.end();
+	//	buzzer_on(50000);
 	delay(100);
 	// Select Analog / Digital
 	station_mode = dcc_off;
@@ -160,6 +167,7 @@ void loop()
 		// Analog mode
 		station_mode = analog;
 		dcc_control.begin(analog);
+		digitalWrite(A2,HIGH);
 		while (1) {
 			//			Serial.write('a');
 			delay (200);
@@ -240,6 +248,7 @@ void loop()
 		locomem * loco_ptr;
 		station_mode = digital;
 		dcc_control.begin(digital);
+		digitalWrite(A2,HIGH);
 		lcd.menu(F("            "),
 				F(" DIGITAL    "),
 				F(" Adresse    "),
@@ -394,6 +403,7 @@ void loop()
 					}
 					loco_ptr->speed = speed;
 				}
+#if 0
 				// Loco controled by pot2
 				loco_ptr = find_control(2);
 				if (loco_ptr != NULL) {
@@ -419,7 +429,7 @@ void loop()
 						lcd.print(F(" 0"));
 					}
 				}
-#if 0
+
 				// Loco controled by pot3
 				loco_ptr = find_control(3);
 				if (loco_ptr != NULL) {
@@ -451,10 +461,53 @@ void loop()
 		break;
 	}
 	case 'B': {
-	break;
+		uint8_t address,constructeur,version;
+		bool no_loco;
+		station_mode = digital;
+		dcc_control.begin(digital);
+		dcc_control.set_direct();
+		digitalWrite(A3,HIGH);
+		lcd.menu(F("            "),
+				F(" Lecture    "),
+				F(" Adresse    "),
+				F("Adr  :      "),
+				F("Const:      "),
+				F("Ver  :      ")
+		);
+		delay(100);
+		no_loco = true;
+		while (no_loco == true) {
+			if (set_programmer(&dcc_control,CURRENT_SENSE) == true) {
+				// Loco detected
+				address = direct_mode_read(1);
+				lcd.go(7,3);
+				lcd.print(address);
+				delay(100);
+				constructeur = direct_mode_read(8);
+				lcd.go(7,4);
+				lcd.print(constructeur);
+				delay(100);
+				version = direct_mode_read(7);
+				lcd.go(7,5);
+				lcd.print(version);
+				delay(100);
+				last = 0;
+				key = 0;
+				no_loco = false;
+				while (key==0) {
+					key=kbd.get_key_debounced(last);
+					delay(100);
+				}
+			} else {
+				lcd.go(7,3);
+				lcd.print(F("NON"));
+				delay(100);
+			}
+		}
+		break;
 	}
 	default:
-	break;
+		break;
 	}
 }
 

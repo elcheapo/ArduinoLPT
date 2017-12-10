@@ -20,7 +20,7 @@ void lprog_write_register(unsigned char regnr, unsigned char data);
 extern void lprog_read_cv(unsigned char lenz_cv);
 extern void lprog_write_cv(unsigned char lenz_cv, unsigned char data);
 
-extern void select_programmer (DCC_timer * _timer, uint8_t _adc_program);
+//extern bool select_programmer (DCC_timer * _timer, uint8_t _adc_program);
 extern uint8_t direct_mode_bit_write(uint16_t cv, uint8_t bitpos, uint8_t mybit);
 extern uint8_t direct_mode_bit_verify(uint16_t cv, uint8_t bitpos, uint8_t mybit);
 extern uint8_t test_direct_mode(void);
@@ -29,7 +29,7 @@ extern uint8_t direct_mode_verify(uint16_t cv, uint8_t data);
 extern uint8_t factory_reset(void);
 extern int16_t direct_mode_read(uint16_t cv);
 extern int8_t programmer(message * prog_message);
-extern uint8_t set_programmer (DCC_timer * _timer, uint8_t _adc_channel);
+extern bool set_programmer (DCC_timer * _timer, uint8_t _adc_channel);
 extern void set_ack_level(uint8_t level);
 extern uint8_t get_ack_level(void);
 #endif /* PROGRAMMER_H_ */

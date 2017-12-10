@@ -56,8 +56,6 @@ public:
 	void end(void);
 	void send_dcc_packet(message * current);
 	void send_direct_dcc_packet(message * direct);
-	void digital_on(void);
-	void digital_off(void);
 	void set_direct(void);
 	void set_queue(void);
 	void analog_set_speed_and_direction(uint16_t speed, tdirection direction);
@@ -82,20 +80,5 @@ inline void DCC_timer::set_queue(void) {direct=0;};
 
 #define T1_OCRA (0x02)
 #define T1_OCRB (0x04)
-
-inline void DCC_timer::digital_on(void) {
-		PORTB |= T1_OCRA;  // Set OCRA in digital
-};
-inline void DCC_timer::digital_off(void) {
-		PORTB &= ~T1_OCRA;  // Clear OCRA in digital
-};
-
-inline tmode DCC_timer::get_mode(void) {
-	uint8_t mode = TCCR1A & 0x03;
-	if (mode == 0x02) return analog;
-	if (mode == 0x03) return digital;
-	return dcc_off;
-}
-
 
 #endif /* DCC_TIMER_H_ */

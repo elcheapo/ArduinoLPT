@@ -79,12 +79,12 @@
 extern message DCC_Reset;
 message prog_message;
 
-#define ACK_LEVEL 30
-#define MIN_ACK 10
+#define ACK_LEVEL 15
+#define MIN_ACK 8
 #define MAX_ACK 400
 #define NB_ACK_SEEN 1
 #define TIMEOUT_ACK 50
-#define STEP_ACK 6
+#define STEP_ACK 1
 #undef DEBUG_UART3
 
 DCC_timer * timer;
@@ -92,17 +92,17 @@ uint8_t prog_adc_channel;
 //t_adc prog_adc_mode;
 uint8_t ack_level;
 
-uint8_t set_programmer (DCC_timer * _timer, uint8_t _adc_channel) {
+bool set_programmer (DCC_timer * _timer, uint8_t _adc_channel) {
 	uint8_t ret;
 	uint8_t i,j;
 	timer = _timer;
 	prog_adc_channel = _adc_channel;
 //	prog_adc_mode = _adc_mode;
-	uint8_t count = 0;
+//	uint8_t count = 0;
 	uint8_t ack0, ack1;
 
 	// Start with default ack Level
-	ack_level = 2 * ACK_LEVEL;
+	ack_level = ACK_LEVEL;
 
 	ret = false;
 //	while(1) {
@@ -126,41 +126,8 @@ uint8_t set_programmer (DCC_timer * _timer, uint8_t _adc_channel) {
 			delay( 100 );
 		}
 		// No ack seen lower detection level
-		if (ret == false) ack_level -= 10;
+		if (ret == false) ack_level -= 1;
 	}
-#if 0
-		if ((ack0 == 0) & (ack1 == 0)) {
-			// Look like we are not seeing the ack, try to lower it
-			if(ack_level > MIN_ACK) {
-				ack_level -= 2;
-				count = 3;
-			} else {
-				// WE are at ack level MIN_ACK, give up if we don't see the ack after 3 times
-				count--;
-				if (count == 0) {
-					ret = false;
-					break; // from while
-				}
-			}
-		} else if (( ack0 == 1) & (ack1 ==1 )) {
-			// We are seeing an ACK both for 0 and 1, we might be too sensitive ...
-			if(ack_level < MAX_ACK) {
-				ack_level += 10;
-				count = 3;
-			} else {
-				// WE are at ack level MAX_ACK, give up if we don't see the ack after 3 times
-				count--;
-				if (count == 0) {
-					ret = false;
-					break; // from while
-				}
-			}
-		} else {
-// Looks like we are seeing the ACK properly
-			break; // from the while
-			// ret is set to OK by default
-		}
-#endif
 	Serial.print(F("ACK LEVEL DETECTED : "));
 	Serial.println(ack_level,10);
 	return ret;
@@ -186,6 +153,7 @@ uint8_t get_ack_level(void) {
 
 int8_t programmer(message * prog_message) {
 	int8_t ret = false;
+	uint16_t value;
 #ifdef DEBUG_ACK
 	uint16_t ack_adc = 0;
 	int16_t time_stamps = 0;
@@ -196,20 +164,17 @@ int8_t programmer(message * prog_message) {
 #endif
 	timer->begin(digital);
     timer->set_direct();
-    timer->digital_on(); // activate program tracks
     // First send 20 resets to prime including 3 for direct mode ...
     DCC_Reset.repeat = 20;
-//    xSemaphoreTake(timer->packet_sent,0); // Make sure we clear the packet_sent semaphore
-    while (timer->packet_ready != 0);
+    while (timer->dcc_busy() != 0);
     timer->send_direct_dcc_packet(&DCC_Reset);
-//    xSemaphoreTake(timer->packet_sent, 2000 / portTICK_RATE_MS);
+    while (timer->dcc_busy() != 0);
     DCC_Reset.repeat = 1;
 #ifdef DEBUG_UART3
-	Serial3.println(F("DCC_Reset sent"));
+	Serial.println(F("DCC_Reset sent"));
 #endif
    	prog_message->repeat = 4; // Should be sent twice before we see the ACK ?
 //    xSemaphoreTake(timer->ready_for_acknowledge, 0);
-    xSemaphoreTake(timer->packet_sent,0); // Make sure we clear the packet_sent semaphore
 #ifdef DEBUG_UART3
 			Serial3.println();
 			Serial3.print(prog_message->repeat,10);
@@ -219,40 +184,19 @@ int8_t programmer(message * prog_message) {
 				Serial3.print(':');
 			}
 #endif
+    while (timer->dcc_busy() != 0);
+	Serial.println(F("---------"));
     timer->send_direct_dcc_packet(prog_message);
 
    //  watch for ACK on correct channel
-//	portENTER_CRITICAL();
-   	adc_enable_channel_with_limits(prog_adc_channel,prog_adc_mode, 1, ack_level); // detect ack
-    watch_adc(prog_adc_channel);
-//    portEXIT_CRITICAL();
 
-//    xSemaphoreTake(timer->ready_for_acknowledge, 10000 / portTICK_RATE_MS);
-   	// command has been taken, now check for ACK
-#ifdef DEBUG_UART3
-	Serial3.println(F("\nWforAck"));
-#endif
-	// First prog packet has been sent, let's how long it take to get the ACK
-#ifdef DEBUG_ACK
-	time_start = xTaskGetTickCountFromISR();
-#endif
 	//	ack_valid_counter = 0;
 	for (uint8_t i=0; i< TIMEOUT_ACK/STEP_ACK; i++) {
-		if (adc_alarm[prog_adc_channel].flag != 0) { // Ack detected
-			adc_alarm[prog_adc_channel].flag = 0; // Clear alarm
-#ifdef DEBUG_ACK
-			time_stamps = adc_alarm[prog_adc_channel].timestamp;
-			ack_adc = adc_alarm[prog_adc_channel].value;
-#endif
+		value = analogRead(prog_adc_channel);
+//		Serial.print(F("ACK read at "));
+		Serial.println(value);
+		if (value > ack_level) { // Ack detected
 			ret = true;
-#ifdef DEBUG_ACK
-			Serial3.print(F("1-start: "));
-			Serial3.println(time_start,DEC);
-			Serial3.print(F("1-ACK: "));
-			Serial3.println(ack_adc,DEC);
-			Serial3.print(F("1-Seen: "));
-			Serial3.println(time_stamps,DEC);
-#endif
 			break;
 		}
 		delay( STEP_ACK );
@@ -261,20 +205,6 @@ int8_t programmer(message * prog_message) {
 		/* Wait until we don't see the ack anymore - just wait 200 ms so we don't get stuck here */
 		delay( 200 );
 
-#if 0
-		vTaskDelay( STEP_ACK / portTICK_RATE_MS );
-//		time_stamps = 0;
-		while (adc_alarm[prog_adc_channel].flag != 0) { // Ack still detected
-			adc_alarm[prog_adc_channel].flag = 0; // Clear alarm
-//			time_stamps = adc_alarm[prog_adc_channel].timestamp;
-			vTaskDelay( STEP_ACK / portTICK_RATE_MS );
-#ifdef DEBUG_ACK
-			Serial3.write('.');
-#endif
-		}
-#endif
-//		Serial3.print(F("Time_end: "));
-//		Serial3.println(time_stamps,DEC);
 #ifdef DEBUG_ACK
 	} else {
 		Serial3.println(F("NO ACK"));
@@ -289,19 +219,14 @@ int8_t programmer(message * prog_message) {
 		Serial3.println(F("Nak"));
 	}
 #endif
-//	portENTER_CRITICAL();
-//	unwatch_adc();
-//	adc_disable_channel(prog_adc_channel);
-//	portEXIT_CRITICAL();
-
-//	xSemaphoreTake(timer->packet_sent, 2000 / portTICK_RATE_MS);
-
 	// Send RESET packet according to spec (direct mode)
 	DCC_Reset.repeat = 5;     // send reset packets
 //    xSemaphoreTake(timer->packet_sent,0); // Make sure we clear the packet_sent semaphore
-    timer->send_direct_dcc_packet(&DCC_Reset);
-//    xSemaphoreTake(timer->packet_sent, 2000 / portTICK_RATE_MS);
-	DCC_Reset.repeat = 1;
+    while (timer->dcc_busy() != 0);
+	timer->send_direct_dcc_packet(&DCC_Reset);
+    while (timer->dcc_busy() != 0);
+
+    DCC_Reset.repeat = 1;
 #ifdef DEBUG_UART3
 	Serial3.print(F("DCC_Reset2 Ret="));
 	Serial3.println(ret,HEX);
@@ -456,7 +381,7 @@ uint8_t factory_reset(void) {
 
 // x _ Prog. on Main Byte ab V3 0xE6 0x30 ADR High ADR Low 0xEC + C CV DAT X-Or
 // x _ Prog. on Main Bit ab V3 0xE6 0x30 ADR High ADR Low 0xE8 + C CV DAT X-Or
-
+#if 0
 t_lenz_result lenz_result;          // This stores the last programming result
 uint8_t lenz_result_adr;
 uint8_t lenz_result_data;
@@ -567,4 +492,4 @@ void lprog_write_cv(uint8_t lenz_cv, uint8_t data) {
 	Serial3.println(F("<lprog_write_cv"));
 #endif
 }
-
+#endif

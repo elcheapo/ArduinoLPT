@@ -1,7 +1,7 @@
 /*
  * helper_function.c
  *
- *  Created on: 5 déc. 2017
+ *  Created on: 5 dï¿½c. 2017
  *      Author: florrain
  */
 
@@ -16,8 +16,8 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 void buzzer_on(uint16_t ms) {
-	pinMode(BUZZER_PIN,OUTPUT);
-	digitalWrite(BUZZER_PIN, 1);
+	DDRD=(1<<DDD3);
+	PORTD|=(1<<PORTD3);
 	decompte = ms;
 }
 // List of functions for helpers
@@ -40,10 +40,10 @@ void update_lcd (void) {
 void read_pot1(void){
 	pot1.read_A_pin();
 }
+#if 0
 void read_pot2(void){
 	pot2.read_A_pin();
 }
-#if 0
 void read_pot3(void){
 	pot3.read_A_pin();
 }
@@ -57,11 +57,15 @@ void alarm_current(void) {
 	current=alarm.get();
 	if (current > 70) {
 		dcc_control.end();
+		digitalWrite(A2,LOW);
+		digitalWrite(A3,LOW);
 		current_alarm = 1;
 	}
 }
 void stop_buzzer(void) {
-	if (decompte == 0) 	digitalWrite(BUZZER_PIN, 0);
+	if (decompte == 0) {
+		PORTD &= ~(1<<PORTD3);
+	}
 }
 
 
@@ -125,7 +129,7 @@ void (*todo_in_idle[])() = {
 		&scan_col_3,
 		&update_lcd,
 		&read_pot1,
-		&read_pot2,
+//		&read_pot2,
 //		&read_pot3,
 		&run_organizer,
 		&alarm_current,
