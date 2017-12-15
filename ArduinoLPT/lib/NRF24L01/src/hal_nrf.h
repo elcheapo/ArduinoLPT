@@ -30,32 +30,32 @@ inline uint8_t hal_nrf_rw(uint8_t value){
  *
  */
 inline void CSN_LOW(void) {
-	digitalWrite(PIN_CSN, LOW);
-//	PORTB &= ~(1<<PB_NRF_CSN);
+//	digitalWrite(PIN_CSN, LOW);
+	PORTD &= ~(1<<PIN_CSN);
 }
 
 /** Macro that set radio's CSN line HIGH.
  *
  */
 inline void CSN_HIGH(void){
-	digitalWrite(PIN_CSN, HIGH);
-//	PORTB |= (1<<PB_NRF_CSN);
+//	digitalWrite(PIN_CSN, HIGH);
+	PORTD |= (1<<PIN_CSN);
 }
 
 /** Macro that set radio's CE line LOW.
  *
  */
 inline void CE_LOW(void) {
-	digitalWrite(PIN_CE, LOW);
-//	PORTD &= ~(1<<PD_NRF_CE);
+//	digitalWrite(PIN_CE, LOW);
+	PORTD &= ~(1<<PIN_CE);
 }
 
 /** Macro that set radio's CE line HIGH.
  *
  */
 inline void CE_HIGH(void) {
-	digitalWrite(PIN_CE, HIGH);
-//	PORTD |= (1<<PD_NRF_CE);
+//	digitalWrite(PIN_CE, HIGH);
+	PORTD |= (1<<PIN_CE);
 }
 
 /**

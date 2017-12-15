@@ -45,15 +45,13 @@ void radio_send_packet_no_ack(uint8_t *packet, uint8_t length) {
 
 /** The address of the radio. Parameter to the radio init LSB first */
 const uint8_t NRF_address1[HAL_NRF_AW_5BYTES] = {0xaa,'s','r','a','M'};
-const uint8_t NRF_address2[HAL_NRF_AW_5BYTES] = {0x5a,'s','r','r','M'}; // Existing remote 1
+const uint8_t NRF_address2[HAL_NRF_AW_5BYTES] = {0x5a,'s','r','a','M'}; // Existing remote 1
 const uint8_t NRF_address3 = 0x55; // Existing remote 2
 const uint8_t NRF_address4 = 0xa5; // Existing remote 3
 
 
 
 uint8_t radio_pl_init_prx (void) {
-	pinMode(PIN_CSN,OUTPUT);
-	pinMode(PIN_CE,OUTPUT);
 
 	//	hal_spi_init(8000000);						// Init SPI at 8 MHz
 	CE_LOW();        // Set Chip Enable (CE) pin low during chip init
@@ -69,12 +67,14 @@ uint8_t radio_pl_init_prx (void) {
 	hal_nrf_write_reg(SETUP_RETR, (((RF_RETRANS_DELAY/250)-1)<<4) | RF_RETRANSMITS);
 	hal_nrf_write_reg(RF_CH, RF_CHANNEL);
 	// Frequency = 2400 + RF_CHANNEL
-	hal_nrf_write_reg(RF_SETUP, 0x0e) ;
+//	hal_nrf_write_reg(RF_SETUP, 0x0e) ;
 	//2 Mbits - not test PLL - 0dBm - default settings
+	hal_nrf_write_reg(RF_SETUP, 0x26) ;
+	//250 kbits - not test PLL - 0dBm - default settings
 
 	// Write addresses LSB first
 	hal_nrf_write_multibyte_reg(HAL_NRF_PIPE0, NRF_address1, HAL_NRF_AW_5BYTES);
-	//	hal_nrf_write_multibyte_reg(HAL_NRF_TX, NRF_address1, HAL_NRF_AW_5BYTES); Not used in PRX
+	hal_nrf_write_multibyte_reg(HAL_NRF_TX, NRF_address1, HAL_NRF_AW_5BYTES); // Not used in PRX
 	hal_nrf_write_multibyte_reg(HAL_NRF_PIPE1, NRF_address2, HAL_NRF_AW_5BYTES);
 	hal_nrf_write_reg(HAL_NRF_PIPE2, NRF_address3);
 	hal_nrf_write_reg(HAL_NRF_PIPE3, NRF_address4);
@@ -91,7 +91,10 @@ uint8_t radio_pl_init_prx (void) {
 	delay(2);
 	hal_nrf_write_reg(STATUS, 0x70);			// Clear pending IRQ
 	hal_nrf_flush_tx(); 						// flush tx fifo, to start clean
+	CE_HIGH();        // Set Chip Enable (CE) to high to allow reception
+
 	return hal_nrf_get_status();
+
 
 }
 
@@ -102,6 +105,15 @@ uint8_t radio_get_packet(uint8_t * packet, uint8_t & count, uint8_t & radio_id) 
 	uint8_t status, fifo_status;
 
 	fifo_status = hal_nrf_read_reg(FIFO_STATUS);
+	status = hal_nrf_get_status();
+#if 0
+	if ((status != 0x0e) && (fifo_status != 0x11)) {
+		Serial.print(F("FIFO/STATUS :"));
+		Serial.print(fifo_status,16);
+		Serial.write('/');
+		Serial.println(status,16);
+	}
+#endif
 	if ((fifo_status & 0x01) == 0) { // a packet is available
 		// get it
 		count = hal_nrf_read_reg(R_RX_PL_WID);
@@ -110,7 +122,6 @@ uint8_t radio_get_packet(uint8_t * packet, uint8_t & count, uint8_t & radio_id) 
 			hal_nrf_get_clear_irq_flags();
 			return false;
 		} else {
-			status = hal_nrf_get_status();
 			radio_id = (status & 0x0f) >> 1;
 			hal_nrf_read_multibyte_reg(R_RX_PAYLOAD, packet, count);
 			// clear IRQ source

@@ -1,7 +1,7 @@
 /*
  * potar.h
  *
- *  Created on: 23 août 2017
+ *  Created on: 23 aoï¿½t 2017
  *      Author: florrain
  */
 
@@ -15,7 +15,9 @@ class Potar {
 
   public:
     Potar (uint8_t _pin);
+    Potar (void);
     uint16_t get(void);
+    void set_value(uint16_t set_value);
     void read_A_pin();
 };
 

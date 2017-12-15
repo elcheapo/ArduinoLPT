@@ -45,11 +45,12 @@ Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
 DCC_timer dcc_control;
 Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
 Potar pot1(1);
+Potar Radiopot1, Radiopot2;
 //Potar pot2(0);
 //Potar pot3(0);
 //aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
 
-//SPISettings fastSPI(8000000, MSBFIRST, SPI_MODE0);
+SPISettings fastSPI(8000000, MSBFIRST, SPI_MODE0);
 
 /* things to do */
 uint8_t which_one;
@@ -68,6 +69,8 @@ void setup() {
 	DIDR0 = 0x03; // see page 257 of datasheet, disable digital pin on pin used for ADC
 	OCR0A = 0x80; // interrupt every ms on timer 0
 	PRR=0; // all peripheral activated
+	DDRD |= (1<<PIN_CSN)|(1<<PIN_CE);
+
 	pinMode(A2, OUTPUT);
 	digitalWrite(A2,LOW);
 	pinMode(A3, OUTPUT);
@@ -214,8 +217,8 @@ void loop()
 					buzzer_on(1000);
 					break;
 				}
-				// Set PWM according to pot1
-				position = pot1.get();
+				// Set PWM according to Radiopot1
+				position = Radiopot1.get();
 				if (position > 530) {
 					speed = position-520;
 					direction= forward;
@@ -278,6 +281,7 @@ void loop()
 				if (loco_ptr != NULL) loco_ptr->control_by = 2;
 			}
 		}
+#if 0
 		Serial.write('3');
 		// Get address for Loco 3
 		lcd.go(6,5);
@@ -288,6 +292,7 @@ void loop()
 				if (loco_ptr != NULL) loco_ptr->control_by = 3;
 			}
 		}
+#endif
 		// At this point we have up to 3 loco ready
 		// We can now read the pot values to set the speed ...
 		while (1) {
@@ -378,11 +383,11 @@ void loop()
 				}
 
 				}
-				// Loco controled by pot1
+				// Loco controled by Radiopot1
 				if (loco_ptr != NULL) {
 					lcd.go(0,3);
 					lcd.print(loco_ptr->address);
-					position = pot1.get();
+					position = Radiopot1.get();
 					if (position > 530) {
 						speed = (position-520) >> 2;
 						loco_ptr->speed = speed;
@@ -403,13 +408,12 @@ void loop()
 					}
 					loco_ptr->speed = speed;
 				}
-#if 0
 				// Loco controled by pot2
 				loco_ptr = find_control(2);
 				if (loco_ptr != NULL) {
 					lcd.go(0,4);
 					lcd.print(loco_ptr->address);
-					position = pot2.get();
+					position = Radiopot2.get();
 					if (position > 530) {
 						speed = (position-520) >> 2;
 						loco_ptr->speed = speed;
@@ -429,6 +433,7 @@ void loop()
 						lcd.print(F(" 0"));
 					}
 				}
+#if 0
 
 				// Loco controled by pot3
 				loco_ptr = find_control(3);
