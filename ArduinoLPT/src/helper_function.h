@@ -22,6 +22,27 @@ void buzzer_on(uint16_t ms) {
 }
 // List of functions for helpers
 
+// Occupancy detector : these are quasi bidi I/O, 1 = Not occupied, 0 = occupied
+uint8_t last_detect;
+void current_detection (void) {
+	uint8_t detect, d_change;
+	uint32_t time_stamp;
+	detect=detector.read();
+	time_stamp = millis();
+	d_change = detect ^ last_detect;
+	last_detect = detect;
+	if ( d_change == 0 ) return;
+	for (uint8_t i = 0; i<8; i++) {
+		if ((d_change & 0x01) != 0) {
+			track_status[i].timestamp = time_stamp;
+			track_status[i].occupied = detect & 0x01;
+		}
+		detect >>= 1;
+		d_change >>= 1;
+	}
+
+}
+
 void scan_col_0(void) {
 	kbd.scan_col(0);
 }
@@ -148,7 +169,8 @@ void (*todo_in_idle[])() = {
 		&run_organizer,
 		&alarm_current,
 		&stop_buzzer,
-		&radio_get_packet_scan
+		&radio_get_packet_scan,
+		&current_detection
 };
 #define NB_TASK (sizeof(todo_in_idle)/sizeof(void(*)()))
 

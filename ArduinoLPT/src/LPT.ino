@@ -39,8 +39,17 @@ const relais_t relais[] PROGMEM = {
 };
 #endif
 
+typedef struct {
+	uint32_t timestamp;
+	uint8_t occupied;
+} track;
+
+
+
 //I2c_Keyboard kbd(0x20);
 I2c_Keyboard kbd(0x38);
+// Uses PCF8474 for current detection on 8 track segments
+I2c_Port detector(0x21);
 Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
 DCC_timer dcc_control;
 Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
@@ -57,6 +66,8 @@ uint8_t which_one;
 uint8_t top_level_delay;
 uint8_t last;
 uint8_t current_alarm;
+track track_status[8];
+
 
 tmode station_mode;
 
@@ -78,6 +89,7 @@ void setup() {
 	TIMSK0 |= 1<<OCIE0A;
 	which_one = 0;
 	current_alarm = 0;
+	last_detect = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
 	Serial.begin(115200);
 	SPI.begin();
@@ -108,12 +120,16 @@ void setup() {
 	} else {
 		Serial.print(F("Radio NOT OK : 0x"));
 		Serial.println(status,16);
-		while (1);
+//		while (1); // We can ignore error if it is not there
 		// If higher bit of radio status is not 0 - we have a wiring issue ...
 	}
 
+
 	//	i2c_port1.write(0xff);
 	last = 0;
+	// Current Detector are all inputs
+	detector.set_mask(0xff);
+
 
 	//	dcc_control.begin(analog);
 
