@@ -38,13 +38,31 @@ const relais_t relais[] PROGMEM = {
 		,{&i2c_port1, 0x10, 0} //
 };
 #endif
+/*
+ *             ---------------------------------7----||------------------------5----
+ *            /---------------------------------6----||------------------------4----\
+ *           |                                                                       |
+ *           |                                                                       |
+ *           8                                                                       |
+ *           |   Prog Track                                                          3
+ *           |  -------------                                                        |
+ *           \---------------\------------------1------------------------------------/
+ *            ----------------------------------2------------------------------------
+ *
+ *
+ */
+
 
 typedef struct {
 	uint32_t timestamp;
 	uint8_t occupied;
 } track;
 
-
+typedef struct {
+	uint8_t dcc_address;
+	uint8_t track_segment;
+	uint8_t current_speed;
+} loco_on_track;
 
 //I2c_Keyboard kbd(0x20);
 I2c_Keyboard kbd(0x38);
@@ -55,6 +73,9 @@ DCC_timer dcc_control;
 Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
 Potar pot1(1);
 Potar Radiopot1, Radiopot2;
+
+loco_on_track locos[5];
+
 //Potar pot2(0);
 //Potar pot3(0);
 //aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
