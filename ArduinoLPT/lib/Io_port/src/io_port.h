@@ -18,7 +18,7 @@ class Io_Port {
     virtual void set_mask (uint8_t mask);
     virtual void read(void);
     virtual uint8_t read_cached (void);
-    virtual uint8_t read_cached (uint32_t time_stamp);
+    virtual uint8_t read_cached (uint32_t & time_stamp);
     virtual void set_input(uint8_t mask);
 };
 
