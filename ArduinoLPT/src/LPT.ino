@@ -22,32 +22,17 @@
 #include "radio.h"
 #include "programmer.h"
 
-#if 0
-//I2c_Port i2c_port1(0x21);
-//I2c_Port feux(0x22);
 
-
-const relais_t relais[] PROGMEM = {
-		{&i2c_port1, 0x01, 1} //
-		,{&i2c_port1, 0x02, 1} //
-		,{&i2c_port1, 0x04, 1} //
-		,{&i2c_port1, 0x08, 1} //
-		,{&i2c_port1, 0x80, 0} //
-		,{&i2c_port1, 0x40, 0} //
-		,{&i2c_port1, 0x20, 0} //
-		,{&i2c_port1, 0x10, 0} //
-};
-#endif
 /*
- *             ---------------------------------7----||------------------------5----
- *            /---------------------------------6----||------------------------4----\
+ *             ---------------------------------9----||------------------------7----
+ *            /---------------------------------8----||------------------------6----\
  *           |                                                                       |
  *           |                                                                       |
- *           8                                                                       |
- *           |   Prog Track                                                          3
+ *           10                                                                      |
+ *           |   Prog Track                                                          5
  *           |  -------------                                                        |
- *           \---------------\------------------1------------------------------------/
- *            ----------------------------------2------------------------------------
+ *           \---------------\--------1----------||----------------3-----------------/
+ *            ------------------------2----------||----------------4-----------------
  *
  *
  */
@@ -66,8 +51,46 @@ typedef struct {
 
 //I2c_Keyboard kbd(0x20);
 I2c_Keyboard kbd(0x38);
-// Uses PCF8474 for current detection on 8 track segments
-I2c_Port detector(0x21);
+
+// Define 5 I2C extender
+I2c_Port i2c_port1(0x21);
+I2c_Port i2c_port2(0x22);
+I2c_Port i2c_port3(0x23);
+I2c_Port i2c_port4(0x24);
+I2c_Port i2c_port5(0x25);
+
+// Define relays for 5 aiguillages
+
+const relais_t relais[] PROGMEM = {
+		{&i2c_port1, 0x01, 1} //
+		,{&i2c_port1, 0x02, 1} //
+		,{&i2c_port1, 0x04, 1} //
+		,{&i2c_port1, 0x08, 1} //
+		,{&i2c_port1, 0x80, 0} //
+		,{&i2c_port1, 0x40, 0} //
+		,{&i2c_port1, 0x20, 0} //
+		,{&i2c_port1, 0x10, 0} //
+		,{&i2c_port2, 0x01, 0} //
+		,{&i2c_port2, 0x02, 0} //
+};
+
+// define 5 aiguillages North / South / East / West / Garage
+#define A_NE 0
+#define A_NW 1
+#define A_SE 2
+#define A_SW 3
+#define A_GARAGE 4
+
+aiguille aiguillage[5] = {
+	{&relais[3],&relais[2],t_peco} // Aiguillage type Peco
+	, {&relais[3],&relais[2],t_peco} // Aiguillage type Peco
+	, {&relais[3],&relais[2],t_peco} // Aiguillage type Peco
+	, {&relais[3],&relais[2],t_peco} // Aiguillage type Peco
+	, {&relais[3],&relais[2],t_peco} // Aiguillage type Peco
+};
+
+
+
 Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
 DCC_timer dcc_control;
 Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
@@ -75,10 +98,10 @@ Potar pot1(1);
 Potar Radiopot1, Radiopot2;
 
 loco_on_track locos[5];
+track track_segment[10];
 
 //Potar pot2(0);
 //Potar pot3(0);
-//aiguille aiguillage(&relais[3],&relais[2],t_peco); // Aiguillage type Peco
 
 SPISettings fastSPI(8000000, MSBFIRST, SPI_MODE0);
 
@@ -149,7 +172,7 @@ void setup() {
 	//	i2c_port1.write(0xff);
 	last = 0;
 	// Current Detector are all inputs
-	detector.set_mask(0xff);
+	i2c_port1.set_mask(0xff);
 
 
 	//	dcc_control.begin(analog);

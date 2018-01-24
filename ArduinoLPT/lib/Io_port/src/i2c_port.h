@@ -15,6 +15,7 @@ class I2c_Port : public Io_Port {
 	uint8_t i2c_address;
 	uint8_t current_value;
 	uint8_t input_mask;
+	uint32_t time_stamp;
 
   protected:
 
@@ -23,7 +24,9 @@ class I2c_Port : public Io_Port {
     void write (uint8_t value);
     void clear_mask (uint8_t mask);
     void set_mask (uint8_t mask);
-    uint8_t read (void);
+    void read (void);
+    uint8_t read_cached(void);
+    uint8_t read_cached(uint32_t & time_stamp);
     void set_input(uint8_t mask);
 };
 

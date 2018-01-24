@@ -27,8 +27,7 @@ uint8_t last_detect;
 void current_detection (void) {
 	uint8_t detect, d_change;
 	uint32_t time_stamp;
-	detect=detector.read();
-	time_stamp = millis();
+	detect=i2c_port1.read_cached(time_stamp);
 	d_change = detect ^ last_detect;
 	last_detect = detect;
 	if ( d_change == 0 ) return;

@@ -16,6 +16,7 @@ I2c_Port::I2c_Port(uint8_t _i2c_address) {
 	i2c_address = _i2c_address;
 	current_value = 0;
 	input_mask =0;
+	time_stamp = 0;
 }
 
 void I2c_Port::write (uint8_t x) {
@@ -57,14 +58,24 @@ void I2c_Port::set_mask(uint8_t x) {
 	if (ret != 0) Serial.print(F("NoACK"));
 }
 
-uint8_t I2c_Port::read (void) {
+void I2c_Port::read (void) {
 	uint8_t temp;
 	Wire.requestFrom(i2c_address, (uint8_t)1);
 	if ( Wire.available() !=0 ) {
 		temp = Wire.read();
 	}
-	return temp;
+	time_stamp = millis();
+	current_value = temp;
 }
+
+uint8_t I2c_Port::read_cached(void) {
+	return current_value;
+}
+uint8_t I2c_Port::read_cached(uint32_t & _time_stamp) {
+	_time_stamp = time_stamp;
+	return current_value;
+}
+
 
 void I2c_Port::set_input(uint8_t mask) {
 	uint8_t ret;
