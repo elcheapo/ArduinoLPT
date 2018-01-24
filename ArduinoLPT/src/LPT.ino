@@ -80,6 +80,7 @@ const relais_t relais[] PROGMEM = {
 #define A_SE 2
 #define A_SW 3
 #define A_GARAGE 4
+#define A_GARAGE2 5
 
 aiguille aiguillage[5] = {
 	{&relais[3],&relais[2],t_peco} // Aiguillage type Peco
