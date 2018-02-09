@@ -25,32 +25,37 @@
 
 /*
  *             ---------------------------------9----||------------------------7----
- *            /---------------------------------8----||------------------------6----\
+ *    A_NW    /---------------------------------8----||------------------------6----\  A_NE
  *           |                                                                       |
  *           |                                                                       |
  *           10                                                                      |
  *           |   Prog Track                                                          5
- *           |  -------------                                                        |
- *           \---------------\--------1----------||----------------3-----------------/
+ *           |  ------------- A_GARAGE                                               |
+ *    A_SW   \---------------\--------1----------||----------------3-----------------/ A_SE
  *            ------------------------2----------||----------------4-----------------
  *
  *
  */
 
+typedef struct {
+	I2c_Port * port;
+	uint8_t mask;
+} t_io;
 
 typedef struct {
 	uint32_t timestamp;
 	uint8_t occupied;
-} track;
+	t_io * sensor;
+} t_track;
 
 typedef struct {
 	uint8_t dcc_address;
 	uint8_t track_segment;
 	uint8_t current_speed;
-} loco_on_track;
+} t_loco_on_track;
 
-//I2c_Keyboard kbd(0x20);
-I2c_Keyboard kbd(0x38);
+I2c_Keyboard kbd(0x20);
+//I2c_Keyboard kbd(0x38);
 
 // Define 5 I2C extender
 I2c_Port i2c_port1(0x21);
@@ -58,6 +63,38 @@ I2c_Port i2c_port2(0x22);
 I2c_Port i2c_port3(0x23);
 I2c_Port i2c_port4(0x24);
 I2c_Port i2c_port5(0x25);
+
+// Define occupancy detector
+
+const t_io occupancy[] PROGMEM = {
+		{&i2c_port2, 0x01} // segment de voie N°1
+		,{&i2c_port2, 0x01} // segment de voie N°2
+		,{&i2c_port2, 0x01} // segment de voie N°3
+		,{&i2c_port2, 0x01} // segment de voie N°4
+		,{&i2c_port2, 0x01} // segment de voie N°5
+		,{&i2c_port2, 0x01} // segment de voie N°6
+		,{&i2c_port2, 0x01} // segment de voie N°7
+		,{&i2c_port2, 0x01} // segment de voie N°8
+		,{&i2c_port2, 0x01} // segment de voie N°9
+		,{&i2c_port2, 0x01} // segment de voie N°10
+};
+
+// Define red / green lights
+const t_io traffic_lights[] PROGMEM = {
+		{&i2c_port2, 0x01} // 1 -> 10 Rouge
+		,{&i2c_port2, 0x01} // 1 -> 10 Vert
+		,{&i2c_port2, 0x01} // 2 -> 10 Rouge
+		,{&i2c_port2, 0x01} // 2 -> 10 Vert
+		,{&i2c_port2, 0x01} // 10 -> 8/9 Rouge
+		,{&i2c_port2, 0x01} // 10 -> 8/9 Vert
+		,{&i2c_port2, 0x01} // 7 -> 5 Rouge
+		,{&i2c_port2, 0x01} // 7 -> 5 Vert
+		,{&i2c_port2, 0x01} // 6 -> 5 Rouge
+		,{&i2c_port2, 0x01} // 6 -> 5 Vert
+		,{&i2c_port2, 0x01} // 5 -> 3/4 Rouge
+		,{&i2c_port2, 0x01} // 5 -> 3/4 Vert
+};
+
 
 // Define relays for 5 aiguillages
 
@@ -80,7 +117,6 @@ const relais_t relais[] PROGMEM = {
 #define A_SE 2
 #define A_SW 3
 #define A_GARAGE 4
-#define A_GARAGE2 5
 
 aiguille aiguillage[5] = {
 	{&relais[3],&relais[2],t_peco} // Aiguillage type Peco
@@ -98,8 +134,9 @@ Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
 Potar pot1(1);
 Potar Radiopot1, Radiopot2;
 
-loco_on_track locos[5];
-track track_segment[10];
+t_loco_on_track locos[5];
+#define MAX_TRACKS 10
+t_track tracks[MAX_TRACKS];
 
 //Potar pot2(0);
 //Potar pot3(0);
@@ -111,7 +148,7 @@ uint8_t which_one;
 uint8_t top_level_delay;
 uint8_t last;
 uint8_t current_alarm;
-track track_status[8];
+t_track track_status[8];
 
 
 tmode station_mode;
@@ -134,7 +171,6 @@ void setup() {
 	TIMSK0 |= 1<<OCIE0A;
 	which_one = 0;
 	current_alarm = 0;
-	last_detect = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
 	Serial.begin(115200);
 	SPI.begin();
@@ -318,7 +354,7 @@ void loop()
 				F(" Adresse    "),
 				F("Loc 1:      "),
 				F("Loc 2:      "),
-				F("Loc 3:      ")
+				F("            ")
 		);
 		Serial.write('1');
 		dcc_control.set_queue();

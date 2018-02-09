@@ -23,23 +23,24 @@ void buzzer_on(uint16_t ms) {
 // List of functions for helpers
 
 // Occupancy detector : these are quasi bidi I/O, 1 = Not occupied, 0 = occupied
-uint8_t last_detect;
 void current_detection (void) {
-	uint8_t detect, d_change;
 	uint32_t time_stamp;
-	detect=i2c_port1.read_cached(time_stamp);
-	d_change = detect ^ last_detect;
-	last_detect = detect;
-	if ( d_change == 0 ) return;
-	for (uint8_t i = 0; i<8; i++) {
-		if ((d_change & 0x01) != 0) {
+	uint8_t temp, mask;
+	I2c_Port * port;
+	for (uint8_t i = 0; i<MAX_TRACKS; i++) {
+		port = (I2c_Port*)pgm_read_word(track_status[i].sensor->port);
+		mask = (uint8_t)pgm_read_byte(track_status[i].sensor->mask);
+		temp = port->read(time_stamp) & mask;
+		if ((temp == 0) && (track_status[i].occupied == 0)) {
+			// Loco just got detected on track
 			track_status[i].timestamp = time_stamp;
-			track_status[i].occupied = detect & 0x01;
 		}
-		detect >>= 1;
-		d_change >>= 1;
+		if (temp ==  0) {
+			track_status[i].occupied = 1;
+		} else {
+			track_status[i].occupied = 0;
+		}
 	}
-
 }
 
 void scan_col_0(void) {
@@ -96,7 +97,7 @@ void radio_get_packet_scan() {
 		lcd.pseudo_led(9,1);
 		if (radio_packet[0] == 2) { // That's a fine packet
 			Radiopot1.set_value((uint16_t)((radio_packet[3] << 8)+radio_packet[4]));
-			Radiopot1.set_value((uint16_t)((radio_packet[5] << 8)+radio_packet[6]));
+			Radiopot2.set_value((uint16_t)((radio_packet[5] << 8)+radio_packet[6]));
 			Serial.write('P');
 		}
 
@@ -169,7 +170,7 @@ void (*todo_in_idle[])() = {
 		&alarm_current,
 		&stop_buzzer,
 		&radio_get_packet_scan,
-		&current_detection
+//		&current_detection
 };
 #define NB_TASK (sizeof(todo_in_idle)/sizeof(void(*)()))
 
