@@ -45,7 +45,7 @@ typedef struct {
 typedef struct {
 	uint32_t timestamp;
 	uint8_t occupied;
-	t_io * sensor;
+	const t_io * sensor;
 } t_track;
 
 typedef struct {
@@ -67,32 +67,32 @@ I2c_Port i2c_port5(0x25);
 // Define occupancy detector
 
 const t_io occupancy[] PROGMEM = {
-		{&i2c_port2, 0x01} // segment de voie N°1
-		,{&i2c_port2, 0x01} // segment de voie N°2
-		,{&i2c_port2, 0x01} // segment de voie N°3
-		,{&i2c_port2, 0x01} // segment de voie N°4
-		,{&i2c_port2, 0x01} // segment de voie N°5
-		,{&i2c_port2, 0x01} // segment de voie N°6
-		,{&i2c_port2, 0x01} // segment de voie N°7
-		,{&i2c_port2, 0x01} // segment de voie N°8
+		{&i2c_port1, 0x01} // segment de voie N°1
+		,{&i2c_port1, 0x02} // segment de voie N°2
+		,{&i2c_port1, 0x04} // segment de voie N°3
+		,{&i2c_port1, 0x08} // segment de voie N°4
+		,{&i2c_port1, 0x10} // segment de voie N°5
+		,{&i2c_port1, 0x20} // segment de voie N°6
+		,{&i2c_port1, 0x40} // segment de voie N°7
+		,{&i2c_port1, 0x80} // segment de voie N°8
 		,{&i2c_port2, 0x01} // segment de voie N°9
-		,{&i2c_port2, 0x01} // segment de voie N°10
+		,{&i2c_port2, 0x02} // segment de voie N°10
 };
 
 // Define red / green lights
 const t_io traffic_lights[] PROGMEM = {
-		{&i2c_port2, 0x01} // 1 -> 10 Rouge
-		,{&i2c_port2, 0x01} // 1 -> 10 Vert
-		,{&i2c_port2, 0x01} // 2 -> 10 Rouge
-		,{&i2c_port2, 0x01} // 2 -> 10 Vert
-		,{&i2c_port2, 0x01} // 10 -> 8/9 Rouge
-		,{&i2c_port2, 0x01} // 10 -> 8/9 Vert
-		,{&i2c_port2, 0x01} // 7 -> 5 Rouge
-		,{&i2c_port2, 0x01} // 7 -> 5 Vert
-		,{&i2c_port2, 0x01} // 6 -> 5 Rouge
-		,{&i2c_port2, 0x01} // 6 -> 5 Vert
-		,{&i2c_port2, 0x01} // 5 -> 3/4 Rouge
-		,{&i2c_port2, 0x01} // 5 -> 3/4 Vert
+		{&i2c_port3, 0x01} // 1 -> 10 Rouge
+		,{&i2c_port3, 0x02} // 1 -> 10 Vert
+		,{&i2c_port3, 0x04} // 2 -> 10 Rouge
+		,{&i2c_port3, 0x08} // 2 -> 10 Vert
+		,{&i2c_port3, 0x10} // 10 -> 8/9 Rouge
+		,{&i2c_port3, 0x20} // 10 -> 8/9 Vert
+		,{&i2c_port3, 0x40} // 7 -> 5 Rouge
+		,{&i2c_port3, 0x80} // 7 -> 5 Vert
+		,{&i2c_port2, 0x04} // 6 -> 5 Rouge
+		,{&i2c_port2, 0x08} // 6 -> 5 Vert
+		,{&i2c_port2, 0x10} // 5 -> 3/4 Rouge
+		,{&i2c_port2, 0x20} // 5 -> 3/4 Vert
 };
 
 
@@ -136,20 +136,28 @@ Potar Radiopot1, Radiopot2;
 
 t_loco_on_track locos[5];
 #define MAX_TRACKS 10
-t_track tracks[MAX_TRACKS];
+t_track tracks[MAX_TRACKS] = {
+		{0,0,&occupancy[0]}
+		,{0,0,&occupancy[1]}
+		,{0,0,&occupancy[2]}
+		,{0,0,&occupancy[3]}
+		,{0,0,&occupancy[4]}
+		,{0,0,&occupancy[5]}
+		,{0,0,&occupancy[6]}
+		,{0,0,&occupancy[7]}
+		,{0,0,&occupancy[8]}
+		,{0,0,&occupancy[9]}
+};
 
 //Potar pot2(0);
 //Potar pot3(0);
 
-SPISettings fastSPI(8000000, MSBFIRST, SPI_MODE0);
 
 /* things to do */
 uint8_t which_one;
 uint8_t top_level_delay;
 uint8_t last;
 uint8_t current_alarm;
-t_track track_status[8];
-
 
 tmode station_mode;
 
@@ -174,6 +182,7 @@ void setup() {
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
 	Serial.begin(115200);
 	SPI.begin();
+	SPI.beginTransaction(SPISettings (8000000, MSBFIRST, SPI_MODE0));
 	lcd.lcd_reset();
 	lcd.menu(F("            "),
 			F("  LPT       "),
@@ -204,15 +213,53 @@ void setup() {
 //		while (1); // We can ignore error if it is not there
 		// If higher bit of radio status is not 0 - we have a wiring issue ...
 	}
+#if 0
+	/* Dump T_io's */
+	Serial.println(F("Occupancy :"));
+	uint8_t * ptr = (uint8_t *)&occupancy[0];
+	for (uint8_t i = 0; i < MAX_TRACKS; i++) {
+		Serial.print(F("0x"));
+		Serial.print(pgm_read_word(ptr + 3*i),16);
+		Serial.print(F(" 0x"));
+		Serial.println(pgm_read_byte(ptr + 3*i + 2),16);
+	}
+	Serial.println(F("Occupancy via get_tio :"));
+
+	t_io test_io;
+	for (uint8_t i = 0; i< MAX_TRACKS; i++) {
+		get_t_io(test_io, &occupancy[i]);
+		Serial.print(F("0x"));
+		Serial.print((uint16_t)test_io.port,16);
+		Serial.print(F(" 0x"));
+		Serial.println((uint8_t)test_io.mask,16);
 
 
-	//	i2c_port1.write(0xff);
+	}
+	Serial.println(F("Occupancy via tracks :"));
+
+	for (uint8_t i = 0; i< MAX_TRACKS; i++) {
+		get_t_io(test_io, tracks[i].sensor);
+		Serial.print(F("0x"));
+		Serial.print((uint16_t)test_io.port,16);
+		Serial.print(F(" 0x"));
+		Serial.println((uint8_t)test_io.mask,16);
+
+
+	}
+ while (1);
+#endif
 	last = 0;
 	// Current Detector are all inputs
-	i2c_port1.set_mask(0xff);
-
-
-	//	dcc_control.begin(analog);
+	for(uint8_t i =0 ; i<MAX_TRACKS; i++) {
+		t_io io_port;
+		get_t_io(io_port,&occupancy[i]);
+		io_port.port->set_input(io_port.mask);
+	}
+	i2c_port1.set_input_i2c();
+	i2c_port2.set_input_i2c();
+	i2c_port3.set_input_i2c();
+	i2c_port4.set_input_i2c();
+	i2c_port5.set_input_i2c();
 
 
 }
@@ -259,6 +306,29 @@ void loop()
 
 	switch (key) {
 	// station_mode is set to Digital or Analog
+	case '1': {
+		// Testing Current sensor
+		lcd.menu(F("            "),
+				F(" TESTING    "),
+				F(" Current    "),
+				F(" Sensors    "),
+				F("            "),
+				F(" * : Sortie "));
+		while (1) {
+			delay(200);
+			lcd.go(0,4);
+			for (uint8_t i = 0; i < MAX_TRACKS; i++) {
+				if (tracks[i].occupied != 0) {
+					lcd.write('X');
+				} else {
+					lcd.write('-');
+				}
+			}
+			key=kbd.get_key_debounced(last);
+			if (key == '*') break;
+		}
+		break;
+	}
 
 	case 'A': {
 		uint16_t speed;

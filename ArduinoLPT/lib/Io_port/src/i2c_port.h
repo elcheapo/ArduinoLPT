@@ -24,8 +24,9 @@ class I2c_Port : public Io_Port {
     I2c_Port(uint8_t i2c_address);
     void write_i2c (void);
     void read_i2c (void);
-    void set_input(uint8_t mask);
+    void set_input_i2c(void);
 
+    void set_input(uint8_t mask);
     void clear_mask (uint8_t mask);
     void set_mask (uint8_t mask);
     uint8_t read(void);

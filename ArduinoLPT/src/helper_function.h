@@ -21,27 +21,52 @@ void buzzer_on(uint16_t ms) {
 	decompte = ms;
 }
 // List of functions for helpers
-
+// Extract RAM based t_io from PROGMEM
+void get_t_io(t_io &io_port, const t_io * flash_tio) {
+	io_port.port = (I2c_Port *)pgm_read_word(&flash_tio->port);
+	io_port.mask = (uint8_t)pgm_read_byte(&flash_tio->mask);
+}
 // Occupancy detector : these are quasi bidi I/O, 1 = Not occupied, 0 = occupied
 void current_detection (void) {
 	uint32_t time_stamp;
-	uint8_t temp, mask;
-	I2c_Port * port;
+	uint8_t temp;
+	t_io io_port;
 	for (uint8_t i = 0; i<MAX_TRACKS; i++) {
-		port = (I2c_Port*)pgm_read_word(track_status[i].sensor->port);
-		mask = (uint8_t)pgm_read_byte(track_status[i].sensor->mask);
-		temp = port->read(time_stamp) & mask;
-		if ((temp == 0) && (track_status[i].occupied == 0)) {
+		get_t_io(io_port,tracks[i].sensor);
+		temp = io_port.port->read(time_stamp) & io_port.mask;
+		if ((temp == 0) && (tracks[i].occupied == 0)) {
 			// Loco just got detected on track
-			track_status[i].timestamp = time_stamp;
+			tracks[i].timestamp = time_stamp;
 		}
 		if (temp ==  0) {
-			track_status[i].occupied = 1;
+			tracks[i].occupied = 1;
 		} else {
-			track_status[i].occupied = 0;
+			tracks[i].occupied = 0;
 		}
 	}
 }
+
+void i2c_1 (void) {
+	i2c_port1.read_i2c();
+	i2c_port1.write_i2c();
+}
+void i2c_2 (void) {
+	i2c_port2.read_i2c();
+	i2c_port2.write_i2c();
+}
+void i2c_3 (void) {
+	i2c_port3.read_i2c();
+	i2c_port3.write_i2c();
+}
+void i2c_4 (void) {
+	i2c_port4.read_i2c();
+	i2c_port4.write_i2c();
+}
+void i2c_5 (void) {
+	i2c_port5.read_i2c();
+	i2c_port5.write_i2c();
+}
+
 
 void scan_col_0(void) {
 	kbd.scan_col(0);
@@ -98,7 +123,7 @@ void radio_get_packet_scan() {
 		if (radio_packet[0] == 2) { // That's a fine packet
 			Radiopot1.set_value((uint16_t)((radio_packet[3] << 8)+radio_packet[4]));
 			Radiopot2.set_value((uint16_t)((radio_packet[5] << 8)+radio_packet[6]));
-			Serial.write('P');
+//			Serial.write('P');
 		}
 
 	}
@@ -157,11 +182,16 @@ int8_t getint(uint16_t & value) {
 
 
 
-void (*todo_in_idle[])() = {
+void (* const todo_in_idle[])(void) PROGMEM = {
 		&scan_col_0,
 		&scan_col_1,
 		&scan_col_2,
 		&scan_col_3,
+		&i2c_1,
+		&i2c_2,
+		&i2c_3,
+		&i2c_4,
+		&i2c_5,
 		&update_lcd,
 		&read_pot1,
 //		&read_pot2,
@@ -170,17 +200,21 @@ void (*todo_in_idle[])() = {
 		&alarm_current,
 		&stop_buzzer,
 		&radio_get_packet_scan,
-//		&current_detection
+		&current_detection
 };
 #define NB_TASK (sizeof(todo_in_idle)/sizeof(void(*)()))
 
 void yield(void) {
+	void (* current_todo_in_idle)(void);
 	if (top_level_delay != 0 ) return;
 	//	Serial.write('i');
 	top_level_delay++;
 	if (which_one == NB_TASK) which_one = 0;
 	// call idle task ...*
-	todo_in_idle[which_one]();
+//	todo_in_idle[which_one]();
+	current_todo_in_idle = (void (*) (void))pgm_read_word(&todo_in_idle[which_one]);
+	current_todo_in_idle();
 	which_one++;
 	top_level_delay--;
+//	Serial.println(which_one);
 }
