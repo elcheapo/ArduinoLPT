@@ -14,19 +14,20 @@
 
 
 void relay_on(const relais_t * id) {
-	Io_Port * temp_io;
-	temp_io = (Io_Port*)pgm_read_word(&id->drive);
+	t_io temp_io;
+	// get relais from flash
+	get_t_io(temp_io, &id->port);
 	if (pgm_read_byte(&id->inverted) != 0)
-		temp_io->clear_mask(pgm_read_byte(&id->mask));
+		temp_io.port->clear_mask(temp_io.mask);
 	else
-		temp_io->set_mask(pgm_read_byte(&id->mask));
+		temp_io.port->set_mask(temp_io.mask);
 }
 void relay_off(const relais_t * id){
-	Io_Port * temp_io;
-	temp_io = (Io_Port*)pgm_read_word(&id->drive);
+	t_io temp_io;
+	// get relais from flash
+	get_t_io(temp_io, &id->port);
 	if (pgm_read_byte(&id->inverted) != 0)
-		temp_io->set_mask(pgm_read_byte(&id->mask));
+		temp_io.port->set_mask(temp_io.mask);
 	else
-		temp_io->clear_mask(pgm_read_byte(&id->mask));
+		temp_io.port->clear_mask(temp_io.mask);
 }
-

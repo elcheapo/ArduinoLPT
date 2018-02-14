@@ -32,9 +32,9 @@ extern Relay relais[];
 #endif
 
 #ifdef STRUCTS
+
 typedef struct {
-	Io_Port * drive;
-	uint8_t mask;
+	const t_io port;
 	uint8_t inverted;
 } relais_t;
 

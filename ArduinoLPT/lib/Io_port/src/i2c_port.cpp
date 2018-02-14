@@ -14,7 +14,8 @@
 
 I2c_Port::I2c_Port(uint8_t _i2c_address) {
 	i2c_address = _i2c_address;
-	current_value = 0;
+	read_value = 0;
+	write_value =0;
 	input_mask =0;
 	time_stamp = 0;
 	modified = 0;
@@ -22,17 +23,19 @@ I2c_Port::I2c_Port(uint8_t _i2c_address) {
 
 void I2c_Port::write_i2c (void) {
 	uint8_t ret;
+	pinMode(5,OUTPUT);
+	digitalWrite(5,1);
 	if (modified == 0) return;
 	Wire.beginTransmission(i2c_address); // transmit to PCF8574
 #ifdef DEBUG
 	Serial.print(F("Write, value = 0x"));
 	Serial.println(current_value,16);
 #endif
-	Wire.write(current_value | input_mask); // make sure we are not changing "input" pins
+	Wire.write(write_value | input_mask); // make sure we are not changing "input" pins
 	ret = Wire.endTransmission();
 	if (ret != 0) Serial.print(F("NoACK"));
 	modified = 0;
-
+	digitalWrite(5,0);
 }
 
 void I2c_Port::read_i2c (void) {
@@ -42,7 +45,7 @@ void I2c_Port::read_i2c (void) {
 		temp = Wire.read();
 	}
 	time_stamp = millis();
-	current_value = temp;
+	read_value = temp;
 }
 
 void I2c_Port::set_input_i2c(void) {

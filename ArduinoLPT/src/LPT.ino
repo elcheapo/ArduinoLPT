@@ -37,10 +37,7 @@
  *
  */
 
-typedef struct {
-	I2c_Port * port;
-	uint8_t mask;
-} t_io;
+
 
 typedef struct {
 	uint32_t timestamp;
@@ -98,19 +95,6 @@ const t_io traffic_lights[] PROGMEM = {
 
 // Define relays for 5 aiguillages
 
-const relais_t relais[] PROGMEM = {
-		{&i2c_port1, 0x01, 1} //
-		,{&i2c_port1, 0x02, 1} //
-		,{&i2c_port1, 0x04, 1} //
-		,{&i2c_port1, 0x08, 1} //
-		,{&i2c_port1, 0x80, 0} //
-		,{&i2c_port1, 0x40, 0} //
-		,{&i2c_port1, 0x20, 0} //
-		,{&i2c_port1, 0x10, 0} //
-		,{&i2c_port2, 0x01, 0} //
-		,{&i2c_port2, 0x02, 0} //
-};
-
 // define 5 aiguillages North / South / East / West / Garage
 #define A_NE 0
 #define A_NW 1
@@ -118,12 +102,25 @@ const relais_t relais[] PROGMEM = {
 #define A_SW 3
 #define A_GARAGE 4
 
+const relais_t relais[] PROGMEM = {
+		{{&i2c_port4, 0x01},0} // NE droit
+		,{{&i2c_port4, 0x02},0} // NE Devie
+		,{{&i2c_port4, 0x04},0} // NW Droit
+		,{{&i2c_port4, 0x08},0} // NW Devie
+		,{{&i2c_port4, 0x10},0} // SE droit
+		,{{&i2c_port4, 0x20},0} // SE Devie
+		,{{&i2c_port4, 0x40},0} // SW droit
+		,{{&i2c_port4, 0x80},0} // SW Devie
+		,{{&i2c_port5, 0x04},0} // Garage Droit
+		,{{&i2c_port5, 0x08},0} // Grarge Devie
+};
+
 aiguille aiguillage[5] = {
-	{&relais[3],&relais[2],t_peco} // Aiguillage type Peco
-	, {&relais[3],&relais[2],t_peco} // Aiguillage type Peco
-	, {&relais[3],&relais[2],t_peco} // Aiguillage type Peco
-	, {&relais[3],&relais[2],t_peco} // Aiguillage type Peco
-	, {&relais[3],&relais[2],t_peco} // Aiguillage type Peco
+	{&relais[0],&relais[1],t_peco} // Aiguillage type Peco
+	, {&relais[2],&relais[3],t_peco} // Aiguillage type Peco
+	, {&relais[4],&relais[5],t_peco} // Aiguillage type Peco
+	, {&relais[6],&relais[7],t_peco} // Aiguillage type Peco
+	, {&relais[8],&relais[9],t_peco} // Aiguillage type Peco
 };
 
 
@@ -323,6 +320,54 @@ void loop()
 				} else {
 					lcd.write('-');
 				}
+			}
+			key=kbd.get_key_debounced(last);
+			if (key == '*') break;
+		}
+		break;
+	}
+	case '2': {
+		lcd.menu(F("            "),
+				F(" TESTING    "),
+				F(" First      "),
+				F("Aiguillage  "),
+				F("            "),
+				F(" * : Sortie "));
+		while (1) {
+			delay(200);
+			lcd.go(0,4);
+			aiguillage[0].set_state(s_droit);
+			lcd.print(F(" Droit "));
+			delay(200);
+			aiguillage[0].set_state(s_devie);
+			lcd.go(0,4);
+			lcd.print(F(" Devie "));
+			delay(200);
+			key=kbd.get_key_debounced(last);
+			if (key == '*') break;
+		}
+		break;
+	}
+	case '3': {
+		lcd.menu(F("            "),
+				F(" TESTING    "),
+				F(" All        "),
+				F("Aiguillage  "),
+				F("            "),
+				F(" * : Sortie "));
+		while (1) {
+			for (uint8_t i = 0; i<5; i++) {
+				delay(200);
+				lcd.go(0,4);
+				aiguillage[i].set_state(s_droit);
+				lcd.print (i,10);
+				lcd.print(F(" Droit "));
+				delay(200);
+				aiguillage[i].set_state(s_devie);
+				lcd.go(0,4);
+				lcd.print (i,10);
+				lcd.print(F(" Devie "));
+				delay(200);
 			}
 			key=kbd.get_key_debounced(last);
 			if (key == '*') break;
