@@ -25,7 +25,8 @@
 #define CURRENT_SENSE 0
 #define POT 1
 
-
+#define PROG_TRACK A3
+#define MAIN_TRACK A2
 
 
 

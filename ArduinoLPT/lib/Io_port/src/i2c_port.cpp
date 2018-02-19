@@ -28,8 +28,10 @@ void I2c_Port::write_i2c (void) {
 	if (modified == 0) return;
 	Wire.beginTransmission(i2c_address); // transmit to PCF8574
 #ifdef DEBUG
-	Serial.print(F("Write, value = 0x"));
-	Serial.println(current_value,16);
+	Serial.print(F("W 0x"));
+	Serial.print(write_value,16);
+	Serial.print(F(" / 0x"));
+	Serial.println(input_mask,16);
 #endif
 	Wire.write(write_value | input_mask); // make sure we are not changing "input" pins
 	ret = Wire.endTransmission();

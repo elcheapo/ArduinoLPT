@@ -51,6 +51,13 @@ typedef struct {
 	uint8_t current_speed;
 } t_loco_on_track;
 
+typedef struct {
+	t_io red_light;
+	t_io green_light;
+} t_signal;
+
+typedef enum {l_off, l_red, l_green} l_state;
+
 I2c_Keyboard kbd(0x20);
 //I2c_Keyboard kbd(0x38);
 
@@ -77,19 +84,13 @@ const t_io occupancy[] PROGMEM = {
 };
 
 // Define red / green lights
-const t_io traffic_lights[] PROGMEM = {
-		{&i2c_port3, 0x01} // 1 -> 10 Rouge
-		,{&i2c_port3, 0x02} // 1 -> 10 Vert
-		,{&i2c_port3, 0x04} // 2 -> 10 Rouge
-		,{&i2c_port3, 0x08} // 2 -> 10 Vert
-		,{&i2c_port3, 0x10} // 10 -> 8/9 Rouge
-		,{&i2c_port3, 0x20} // 10 -> 8/9 Vert
-		,{&i2c_port3, 0x40} // 7 -> 5 Rouge
-		,{&i2c_port3, 0x80} // 7 -> 5 Vert
-		,{&i2c_port2, 0x04} // 6 -> 5 Rouge
-		,{&i2c_port2, 0x08} // 6 -> 5 Vert
-		,{&i2c_port2, 0x10} // 5 -> 3/4 Rouge
-		,{&i2c_port2, 0x20} // 5 -> 3/4 Vert
+const t_signal traffic_lights[] PROGMEM = {
+		{ {&i2c_port3, 0x01} /* 1 -> 10 Rouge */ ,{&i2c_port3, 0x02}} // 1 -> 10 Vert */
+		,{{&i2c_port3, 0x04} /* 2 -> 10 Rouge */ ,{&i2c_port3, 0x08}} /* 2 -> 10 Vert */
+		,{{&i2c_port3, 0x10} /* 10 -> 8/9 Rouge */ ,{&i2c_port3, 0x20}} /* 10 -> 8/9 Vert */
+		,{{&i2c_port3, 0x40} /* 7 -> 5 Rouge */ ,{&i2c_port3, 0x80}} /* 7 -> 5 Vert */
+		,{{&i2c_port2, 0x04} /* 6 -> 5 Rouge */	,{&i2c_port2, 0x08}} /* 6 -> 5 Vert */
+		,{{&i2c_port2, 0x10} /* 5 -> 3/4 Rouge*/ ,{&i2c_port2, 0x20}} /* 5 -> 3/4 Vert */
 };
 
 
@@ -245,6 +246,39 @@ void setup() {
 	}
  while (1);
 #endif
+#if 0
+	/* Dump T_io's */
+	Serial.println(F("Traffic_lights :"));
+	uint8_t * ptr = (uint8_t *)&traffic_lights[0];
+	for (uint8_t i = 0; i < 12; i++) {
+		Serial.print(F("0x"));
+		Serial.print(pgm_read_word(ptr + 3*i),16);
+		Serial.print(F(" 0x"));
+		Serial.println(pgm_read_byte(ptr + 3*i + 2),16);
+	}
+	Serial.println(F("traffic_lights via get_tio :"));
+
+	t_io test_io;
+	t_signal * signal1;
+	for (uint8_t i = 0; i< 6; i++) {
+		signal1 = &traffic_lights[i];
+		get_t_io(test_io, &signal1->red_light);
+		Serial.print(F("0x"));
+		Serial.print((uint16_t)test_io.port,16);
+		Serial.print(F(" 0x"));
+		Serial.println((uint8_t)test_io.mask,16);
+		get_t_io(test_io, &signal1->green_light);
+		Serial.print(F("0x"));
+		Serial.print((uint16_t)test_io.port,16);
+		Serial.print(F(" 0x"));
+		Serial.println((uint8_t)test_io.mask,16);
+
+
+	}
+
+ while (1);
+#endif
+
 	last = 0;
 	// Current Detector are all inputs
 	for(uint8_t i =0 ; i<MAX_TRACKS; i++) {
@@ -257,8 +291,11 @@ void setup() {
 	i2c_port3.set_input_i2c();
 	i2c_port4.set_input_i2c();
 	i2c_port5.set_input_i2c();
-
-
+	/* The above code also sets all outputs to 0, which is needed not to drive the points */
+	/* but the lights will be on so turn them off ... */
+	for (uint8_t i = 0; i<6; i++) {
+		set_light(&traffic_lights[i], l_off);
+	}
 }
 
 // The loop function is called in an endless loop
@@ -374,6 +411,33 @@ void loop()
 		}
 		break;
 	}
+	case '4': {
+		lcd.menu(F("            "),
+				F(" TESTING    "),
+				F(" All        "),
+				F(" Feux       "),
+				F("            "),
+				F(" * : Sortie "));
+		while (1) {
+			for (uint8_t i = 0; i<6; i++) {
+				delay(500);
+				lcd.go(0,4);
+				set_light(&traffic_lights[i], l_red);
+				lcd.print (i,10);
+				lcd.print(F(" Rouge "));
+				delay(500);
+				set_light(&traffic_lights[i], l_green);
+				lcd.go(0,4);
+				lcd.print (i,10);
+				lcd.print(F(" Green  "));
+				delay(500);
+				set_light(&traffic_lights[i], l_off);
+			}
+			key=kbd.get_key_debounced(last);
+			if (key == '*') break;
+		}
+		break;
+	}
 
 	case 'A': {
 		uint16_t speed;
@@ -452,6 +516,15 @@ void loop()
 				} else {
 					lcd.print(F("----"));
 				}
+				lcd.go(0,4);
+				for (uint8_t i = 0; i < MAX_TRACKS; i++) {
+					if (tracks[i].occupied != 0) {
+						lcd.write('X');
+					} else {
+						lcd.write('-');
+					}
+				}
+
 			}
 		}
 		break;
@@ -531,7 +604,7 @@ void loop()
 						F("Adr : Speed "),
 						F("    :       "),
 						F("    :       "),
-						F("    :       ")
+						F("            ")
 				);
 				key = kbd.get_key_debounced(last);
 				if (key == '*') break;
@@ -673,6 +746,15 @@ void loop()
 					}
 				}
 #endif
+				lcd.go(0,5);
+				for (uint8_t i = 0; i < MAX_TRACKS; i++) {
+					if (tracks[i].occupied != 0) {
+						lcd.write('X');
+					} else {
+						lcd.write('-');
+					}
+				}
+
 			}
 		}
 		break;
@@ -723,9 +805,13 @@ void loop()
 		}
 		break;
 	}
-	default:
+	case 'C': {
 		break;
 	}
+	default:
+		break;
+	} /* End Case */
 }
+
 
 

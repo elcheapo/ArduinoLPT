@@ -180,6 +180,23 @@ int8_t getint(uint16_t & value) {
 	return (-1);
 }
 
+void set_light (const t_signal * light, l_state light_state ) {
+	t_io port1,port2;
+	get_t_io(port1, &light->red_light);
+	get_t_io(port2, &light->green_light);
+	if (light_state == l_red) {
+		port1.port->clear_mask(port1.mask);
+		port2.port->set_mask(port2.mask);
+
+	} else if (light_state == l_green) {
+		port1.port->set_mask(port1.mask);
+		port2.port->clear_mask(port2.mask);
+	} else {
+		port1.port->set_mask(port1.mask);
+		port2.port->set_mask(port2.mask);
+	}
+}
+
 
 
 void (* const todo_in_idle[])(void) PROGMEM = {

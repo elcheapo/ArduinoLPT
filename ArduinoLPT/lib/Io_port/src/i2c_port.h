@@ -51,10 +51,22 @@ inline uint8_t I2c_Port::read(uint32_t & _time_stamp) {
 }
 inline void I2c_Port::clear_mask (uint8_t x) {
 	write_value = (~(x) & write_value);
+#ifdef DEBUG
+	Serial.print(F("Clear: 0x"));
+	Serial.print(x,16);
+	Serial.print(F(" / 0x"));
+	Serial.println(write_value,16);
+#endif
 	modified = 1;
 }
 inline void I2c_Port::set_mask(uint8_t x) {
 	write_value = x | write_value;
+#ifdef DEBUG
+	Serial.print(F("Set: 0x"));
+	Serial.print(x,16);
+	Serial.print(F(" / 0x"));
+	Serial.println(write_value,16);
+#endif
 	modified = 1;
 }
 inline void I2c_Port::write(uint8_t data) {
