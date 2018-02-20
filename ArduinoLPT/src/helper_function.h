@@ -6,7 +6,7 @@
  */
 
 
-
+#if 0
 ISR(TIMER1_OVF_vect) {
 	dcc_control.timer_overflow_interrupt();
 }
@@ -14,12 +14,22 @@ uint16_t decompte;
 ISR(TIMER0_COMPA_vect) {
 	if (decompte != 0) decompte --;
 }
+#endif
+
+uint32_t buzzer_stop;
 
 void buzzer_on(uint16_t ms) {
 	DDRD=(1<<DDD3);
 	PORTD|=(1<<PORTD3);
-	decompte = ms;
+	buzzer_stop = millis() + ms;
 }
+void stop_buzzer(void) {
+	if (millis() > buzzer_stop) {
+		PORTD &= ~(1<<PORTD3);
+	}
+}
+
+
 // List of functions for helpers
 // Extract RAM based t_io from PROGMEM
 void get_t_io(t_io &io_port, const t_io * flash_tio) {
@@ -108,12 +118,6 @@ void alarm_current(void) {
 		current_alarm = 1;
 	}
 }
-void stop_buzzer(void) {
-	if (decompte == 0) {
-		PORTD &= ~(1<<PORTD3);
-	}
-}
-
 uint8_t radio_packet[32], radio_count,radio_id;
 
 void radio_get_packet_scan() {
