@@ -17,7 +17,7 @@
 //#define PIN_RST 5
 //#define PIN_SS 6
 //#define PIN_DC 7
-#define PIN_RST 8
+#define PIN_RST 5
 #define PIN_SS 6
 #define PIN_DC 7
 
