@@ -174,7 +174,8 @@ void setup() {
 	digitalWrite(A2,LOW);
 	pinMode(A3, OUTPUT);
 	digitalWrite(A3,LOW);
-	TIMSK0 |= 1<<OCIE0A;
+	// We use millis() to account for time measurements
+//	TIMSK0 |= 1<<OCIE0A;
 	which_one = 0;
 	current_alarm = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
