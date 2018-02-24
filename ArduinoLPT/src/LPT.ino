@@ -24,15 +24,15 @@
 
 
 /*
- *             ---------------------------------9----||------------------------7----
- *    A_NW    /---------------------------------8----||------------------------6----\  A_NE
- *           |                                                                       |
- *           |                                                                       |
- *           10                                                                      |
- *           |   Prog Track                                                          5
- *           |  ------------- A_GARAGE                                               |
- *    A_SW   \---------------\--------1----------||----------------3-----------------/ A_SE
- *            ------------------------2----------||----------------4-----------------
+ *             ----------------------------9----||----------------------7----
+ *    A_NW    /----------------------------8----||----------------------6----\  A_NE
+ *           |                                                                |
+ *           |                                                                |
+ *           10                                                               |
+ *           |   Prog Track                                                   5
+ *           |  ------------- A_GARAGE                                        |
+ *    A_SW   \---------------\--------1----||--------------3-----------------/ A_SE
+ *            ------------------------2----||--------------4-----------------
  *
  *
  */
@@ -71,16 +71,16 @@ I2c_Port i2c_port5(0x25);
 // Define occupancy detector
 
 const t_io occupancy[] PROGMEM = {
-		{&i2c_port1, 0x01} // segment de voie N°1
-		,{&i2c_port1, 0x02} // segment de voie N°2
-		,{&i2c_port1, 0x04} // segment de voie N°3
-		,{&i2c_port1, 0x08} // segment de voie N°4
-		,{&i2c_port1, 0x10} // segment de voie N°5
-		,{&i2c_port1, 0x20} // segment de voie N°6
-		,{&i2c_port1, 0x40} // segment de voie N°7
-		,{&i2c_port1, 0x80} // segment de voie N°8
-		,{&i2c_port2, 0x01} // segment de voie N°9
-		,{&i2c_port2, 0x02} // segment de voie N°10
+		{&i2c_port1, 0x0} // segment de voie N°1
+		,{&i2c_port1, 0x0} // segment de voie N°2
+		,{&i2c_port4, 0x01} // segment de voie N°3 -OK
+		,{&i2c_port4, 0x02} // segment de voie N°4 -OK
+		,{&i2c_port4, 0x08} // segment de voie N°5 -OK
+		,{&i2c_port5, 0x02} // segment de voie N°6 -OK
+		,{&i2c_port5, 0x01} // segment de voie N°7-OK
+		,{&i2c_port1, 0x0} // segment de voie N°8
+		,{&i2c_port2, 0x0} // segment de voie N°9
+		,{&i2c_port2, 0x0} // segment de voie N°10
 };
 
 // Define red / green lights
@@ -104,16 +104,16 @@ const t_signal traffic_lights[] PROGMEM = {
 #define A_GARAGE 4
 
 const relais_t relais[] PROGMEM = {
-		{{&i2c_port4, 0x01},0} // NE droit
-		,{{&i2c_port4, 0x02},0} // NE Devie
-		,{{&i2c_port4, 0x04},0} // NW Droit
-		,{{&i2c_port4, 0x08},0} // NW Devie
-		,{{&i2c_port4, 0x10},0} // SE droit
-		,{{&i2c_port4, 0x20},0} // SE Devie
-		,{{&i2c_port4, 0x40},0} // SW droit
-		,{{&i2c_port4, 0x80},0} // SW Devie
-		,{{&i2c_port5, 0x04},0} // Garage Droit
-		,{{&i2c_port5, 0x08},0} // Grarge Devie
+		{{&i2c_port4, 0x10},0} // NE droit -OK
+		,{{&i2c_port4, 0x20},0} // NE Devie -OK
+		,{{&i2c_port1, 0x01},0} // NW Droit OK
+		,{{&i2c_port1, 0x02},0} // NW Devie -OK
+		,{{&i2c_port4, 0x40},0} // SE droit OK
+		,{{&i2c_port4, 0x80},0} // SE Devie  OK
+		,{{&i2c_port2, 0x04},0} // SW droit OK
+		,{{&i2c_port2, 0x08},0} // SW Devie OK
+		,{{&i2c_port2, 0x01},0} // Garage Droit OK
+		,{{&i2c_port2, 0x02},0} // Grarge Devie OK
 };
 
 aiguille aiguillage[5] = {
@@ -395,17 +395,17 @@ void loop()
 				F(" * : Sortie "));
 		while (1) {
 			for (uint8_t i = 0; i<5; i++) {
-				delay(200);
+				delay(1000);
 				lcd.go(0,4);
 				aiguillage[i].set_state(s_droit);
 				lcd.print (i,10);
 				lcd.print(F(" Droit "));
-				delay(200);
+				delay(2000);
 				aiguillage[i].set_state(s_devie);
 				lcd.go(0,4);
 				lcd.print (i,10);
 				lcd.print(F(" Devie "));
-				delay(200);
+				delay(2000);
 			}
 			key=kbd.get_key_debounced(last);
 			if (key == '*') break;
