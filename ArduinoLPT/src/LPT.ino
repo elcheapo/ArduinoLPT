@@ -58,8 +58,8 @@ typedef struct {
 
 typedef enum {l_off, l_red, l_green} l_state;
 
-I2c_Keyboard kbd(0x20);
-//I2c_Keyboard kbd(0x38);
+//I2c_Keyboard kbd(0x20);
+I2c_Keyboard kbd(0x38);
 
 // Define 5 I2C extender
 I2c_Port i2c_port1(0x21);
@@ -323,25 +323,13 @@ void loop()
 	while (key == 0) {
 		delay(200);
 		key = kbd.get_key();
-		switch (key) {
-		case 'A':
-			Serial.println(F("ANALOG"));
-			break;
-		case 'B':
-			Serial.println(F("READ ADDRESS"));
-			break;
-		case 'D':
-			Serial.println(F("DIGITAL"));
-			break;
-		default:
-			break;
-		}
 	}
 	lcd.clear();
 
 	switch (key) {
 	// station_mode is set to Digital or Analog
 	case '1': {
+		Serial.println(F("Testing Current sensor"));
 		// Testing Current sensor
 		lcd.menu(F("            "),
 				F(" TESTING    "),
@@ -365,6 +353,7 @@ void loop()
 		break;
 	}
 	case '2': {
+		Serial.println(F("Testing fisrt point"));
 		lcd.menu(F("            "),
 				F(" TESTING    "),
 				F(" First      "),
@@ -387,6 +376,7 @@ void loop()
 		break;
 	}
 	case '3': {
+		Serial.println(F("Testing all points"));
 		lcd.menu(F("            "),
 				F(" TESTING    "),
 				F(" All        "),
@@ -413,6 +403,7 @@ void loop()
 		break;
 	}
 	case '4': {
+		Serial.println(F("Testing all points"));
 		lcd.menu(F("            "),
 				F(" TESTING    "),
 				F(" All        "),
@@ -445,6 +436,7 @@ void loop()
 		tdirection direction;
 		uint8_t key;
 		// Analog mode
+		Serial.println(F("Analog"));
 		station_mode = analog;
 		dcc_control.begin(analog);
 		digitalWrite(A2,HIGH);
@@ -536,8 +528,12 @@ void loop()
 		uint16_t value;
 		locomem * loco_ptr;
 		station_mode = digital;
+
+		Serial.println(F("Digital"));
+
 		dcc_control.begin(digital);
 		digitalWrite(A2,HIGH);
+		digitalWrite(A3,LOW);
 		lcd.menu(F("            "),
 				F(" DIGITAL    "),
 				F(" Adresse    "),
@@ -762,11 +758,13 @@ void loop()
 	}
 	case 'B': {
 		uint8_t address,constructeur,version;
-		bool no_loco;
+		Serial.print(F("Reading Adress"));
+		delay(100);
 		station_mode = digital;
 		dcc_control.begin(digital);
 		dcc_control.set_direct();
 		digitalWrite(A3,HIGH);
+		digitalWrite(A2,LOW);
 		lcd.menu(F("            "),
 				F(" Lecture    "),
 				F(" Adresse    "),
@@ -775,34 +773,32 @@ void loop()
 				F("Ver  :      ")
 		);
 		delay(100);
-		no_loco = true;
-		while (no_loco == true) {
-			if (set_programmer(&dcc_control,CURRENT_SENSE) == true) {
-				// Loco detected
-				address = direct_mode_read(1);
-				lcd.go(7,3);
-				lcd.print(address);
-				delay(100);
-				constructeur = direct_mode_read(8);
-				lcd.go(7,4);
-				lcd.print(constructeur);
-				delay(100);
-				version = direct_mode_read(7);
-				lcd.go(7,5);
-				lcd.print(version);
-				delay(100);
-				last = 0;
-				key = 0;
-				no_loco = false;
-				while (key==0) {
-					key=kbd.get_key_debounced(last);
-					delay(100);
-				}
-			} else {
-				lcd.go(7,3);
-				lcd.print(F("NON"));
-				delay(100);
-			}
+		if (set_programmer(&dcc_control,CURRENT_SENSE) == true) {
+			// Loco detected
+			address = direct_mode_read(1);
+			lcd.go(7,3);
+			lcd.print(address);
+			delay(100);
+			constructeur = direct_mode_read(8);
+			lcd.go(7,4);
+			lcd.print(constructeur);
+			delay(100);
+			version = direct_mode_read(7);
+			lcd.go(7,5);
+			lcd.print(version);
+			delay(100);
+			last = 0;
+			key = 0;
+		} else {
+			lcd.go(7,3);
+			lcd.print(F("NON"));
+			delay(100);
+		}
+		key = 0;
+		while (key==0) {
+			// Wait until keypress
+			key=kbd.get_key_debounced(last);
+			delay(100);
 		}
 		break;
 	}

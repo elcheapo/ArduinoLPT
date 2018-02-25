@@ -185,7 +185,7 @@ int8_t programmer(message * prog_message) {
 			}
 #endif
     while (timer->dcc_busy() != 0);
-	Serial.println(F("---------"));
+//	Serial.println(F("---------"));
     timer->send_direct_dcc_packet(prog_message);
 
    //  watch for ACK on correct channel
@@ -194,7 +194,7 @@ int8_t programmer(message * prog_message) {
 	for (uint8_t i=0; i< TIMEOUT_ACK/STEP_ACK; i++) {
 		value = analogRead(prog_adc_channel);
 //		Serial.print(F("ACK read at "));
-		Serial.println(value);
+//		Serial.println(value);
 		if (value > ack_level) { // Ack detected
 			ret = true;
 			break;

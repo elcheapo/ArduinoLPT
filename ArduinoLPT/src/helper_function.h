@@ -6,10 +6,10 @@
  */
 
 
-#if 0
 ISR(TIMER1_OVF_vect) {
 	dcc_control.timer_overflow_interrupt();
 }
+#if 0
 uint16_t decompte;
 ISR(TIMER0_COMPA_vect) {
 	if (decompte != 0) decompte --;
