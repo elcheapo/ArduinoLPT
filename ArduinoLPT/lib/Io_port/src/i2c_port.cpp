@@ -19,11 +19,13 @@ I2c_Port::I2c_Port(uint8_t _i2c_address) {
 	input_mask =0;
 	time_stamp = 0;
 	modified = 0;
+	disabled = 1;
 }
 
 void I2c_Port::write_i2c (void) {
 	uint8_t ret;
 	if (modified == 0) return;
+	if (disabled != 0) return;
 	Wire.beginTransmission(i2c_address); // transmit to PCF8574
 #ifdef DEBUG
 	Serial.print(F("W 0x"));
@@ -39,6 +41,7 @@ void I2c_Port::write_i2c (void) {
 
 void I2c_Port::read_i2c (void) {
 	uint8_t temp;
+	if (disabled != 0) return;
 	Wire.requestFrom(i2c_address, (uint8_t)1);
 	if ( Wire.available() !=0 ) {
 		temp = Wire.read();
@@ -57,7 +60,13 @@ void I2c_Port::set_input_i2c(void) {
 	Serial.print(F("IM 0x"));
 	Serial.println(input_mask,16);
 #endif
-	if (ret != 0) Serial.print(F("NoACK"));
+	if (ret != 0) {
+		Serial.print(F("NoACK Port disabled at 0x"));
+		Serial.println(i2c_address,16);
+		disabled = 1;
+	} else {
+		disabled = 0;
+	}
 
 }
 

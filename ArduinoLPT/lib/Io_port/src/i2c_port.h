@@ -19,6 +19,7 @@ class I2c_Port : public Io_Port {
 	uint8_t write_value;
 	uint8_t input_mask;
 	uint8_t modified;
+	uint8_t disabled;
 	uint32_t time_stamp;
 
   protected:
