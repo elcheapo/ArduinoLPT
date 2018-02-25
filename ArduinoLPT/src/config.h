@@ -8,6 +8,9 @@
 #ifndef SRC_CONFIG_H_
 #define SRC_CONFIG_H_
 
+#define REGULATOR 0x01
+#define REGULATOR_OFF (PORTB |= REGULATOR)
+#define REGULATOR_ON (PORTB &= ~(REGULATOR))
 
 #define BUZZER_PIN 3
 //Radio defines

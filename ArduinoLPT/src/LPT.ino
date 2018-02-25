@@ -165,6 +165,9 @@ tmode station_mode;
 void setup() {
 	uint8_t i,ret,status;
 	// Add your initialization code here
+	// Set PB0 to deactivate regulator until we are ready
+	REGULATOR_OFF;
+
 	DIDR0 = 0x03; // see page 257 of datasheet, disable digital pin on pin used for ADC
 	OCR0A = 0x80; // interrupt every ms on timer 0
 	PRR=0; // all peripheral activated
@@ -297,6 +300,9 @@ void setup() {
 	for (uint8_t i = 0; i<6; i++) {
 		set_light(&traffic_lights[i], l_off);
 	}
+	// Now the pins to drive the points are 0
+	// Turn ON the regulator
+	REGULATOR_ON;
 }
 
 // The loop function is called in an endless loop
