@@ -58,8 +58,8 @@ typedef struct {
 
 typedef enum {l_off, l_red, l_green} l_state;
 
-//I2c_Keyboard kbd(0x20);
-I2c_Keyboard kbd(0x38);
+I2c_Keyboard kbd(0x20);
+//I2c_Keyboard kbd(0x38);
 
 // Define 5 I2C extender
 I2c_Port i2c_port1(0x21);
@@ -385,17 +385,17 @@ void loop()
 				F(" * : Sortie "));
 		while (1) {
 			for (uint8_t i = 0; i<5; i++) {
-				delay(1000);
+				delay(500);
 				lcd.go(0,4);
 				aiguillage[i].set_state(s_droit);
 				lcd.print (i,10);
 				lcd.print(F(" Droit "));
-				delay(2000);
+				delay(1000);
 				aiguillage[i].set_state(s_devie);
 				lcd.go(0,4);
 				lcd.print (i,10);
 				lcd.print(F(" Devie "));
-				delay(2000);
+				delay(1000);
 			}
 			key=kbd.get_key_debounced(last);
 			if (key == '*') break;
