@@ -201,7 +201,9 @@ void set_light (const t_signal * light, l_state light_state ) {
 	}
 }
 
+void light_control (void) {
 
+}
 
 void (* const todo_in_idle[])(void) PROGMEM = {
 		&scan_col_0,

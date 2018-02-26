@@ -70,6 +70,18 @@ I2c_Port i2c_port5(0x25);
 
 // Define occupancy detector
 
+#define O_V1 0
+#define O_V2 1
+#define O_V3 2
+#define O_V4 3
+#define O_V5 4
+#define O_V6 5
+#define O_V7 6
+#define O_V8 7
+#define O_V9 8
+#define O_V10 9
+
+
 const t_io occupancy[] PROGMEM = {
 		{&i2c_port1, 0x0} // segment de voie N°1
 		,{&i2c_port1, 0x0} // segment de voie N°2
@@ -84,13 +96,20 @@ const t_io occupancy[] PROGMEM = {
 };
 
 // Define red / green lights
+#define TL_V1 0
+#define TL_V2 1
+#define TL_V10 2
+#define TL_V7 3
+#define TL_V6 4
+#define TL_V5 5
+
 const t_signal traffic_lights[] PROGMEM = {
-		{ {&i2c_port3, 0x01} /* 1 -> 10 Rouge */ ,{&i2c_port3, 0x02}} // 1 -> 10 Vert */
-		,{{&i2c_port3, 0x04} /* 2 -> 10 Rouge */ ,{&i2c_port3, 0x08}} /* 2 -> 10 Vert */
-		,{{&i2c_port3, 0x10} /* 10 -> 8/9 Rouge */ ,{&i2c_port3, 0x20}} /* 10 -> 8/9 Vert */
-		,{{&i2c_port3, 0x40} /* 7 -> 5 Rouge */ ,{&i2c_port3, 0x80}} /* 7 -> 5 Vert */
-		,{{&i2c_port2, 0x04} /* 6 -> 5 Rouge */	,{&i2c_port2, 0x08}} /* 6 -> 5 Vert */
-		,{{&i2c_port2, 0x10} /* 5 -> 3/4 Rouge*/ ,{&i2c_port2, 0x20}} /* 5 -> 3/4 Vert */
+		{ {&i2c_port3, 0x0} /* 1 -> 10 Rouge */ ,{&i2c_port3, 0x0}} // 1 -> 10 Vert */
+		,{{&i2c_port3, 0x0} /* 2 -> 10 Rouge */ ,{&i2c_port3, 0x0}} /* 2 -> 10 Vert */
+		,{{&i2c_port3, 0x0} /* 10 -> 8/9 Rouge */ ,{&i2c_port3, 0x0}} /* 10 -> 8/9 Vert */
+		,{{&i2c_port3, 0x0} /* 7 -> 5 Rouge */ ,{&i2c_port3, 0x0}} /* 7 -> 5 Vert */
+		,{{&i2c_port2, 0x0} /* 6 -> 5 Rouge */	,{&i2c_port2, 0x0}} /* 6 -> 5 Vert */
+		,{{&i2c_port2, 0x0} /* 5 -> 3/4 Rouge*/ ,{&i2c_port2, 0x0}} /* 5 -> 3/4 Vert */
 };
 
 
