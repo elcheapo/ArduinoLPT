@@ -144,6 +144,18 @@ aiguille aiguillage[5] = {
 };
 
 
+/* List of possibles "trips", positive number is a track segment, negative number is a stop for n second */
+const int8_t trips [][8] PROGMEM = {
+		{5,3,1,10,9,7,50,0},
+		{5,3,1,10,8,6,50,0},
+		{5,4,2,10,9,7,50,0},
+		{5,4,2,10,9,7,50,0},
+		{5,3,1,10,9,-10,7,50},
+		{5,3,1,10,8,-10,6,50},
+		{5,4,2,10,9,-10,7,50},
+		{5,4,2,10,9,-10,7,50}
+};
+
 
 Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
 DCC_timer dcc_control;
