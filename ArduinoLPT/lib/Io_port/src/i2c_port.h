@@ -74,6 +74,9 @@ inline void I2c_Port::write(uint8_t data) {
 	write_value = data;
 	modified = 1;
 }
+inline void I2c_Port::set_input(uint8_t mask) {
+	input_mask |= mask;
+}
 
 extern void get_t_io(t_io &io_port, const t_io * flash_tio);
 

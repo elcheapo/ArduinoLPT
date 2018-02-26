@@ -828,6 +828,22 @@ void loop()
 		break;
 	}
 	case 'C': {
+		lcd.menu(F("            "),
+				F(" Automatique"),
+				F("            "),
+				F("            "),
+				F("            "),
+				F("            "));
+		while(1) {
+			delay(50);
+			// Do we want to exit ?
+			key = kbd.get_key_debounced(last);
+			if (key == '*') break;
+			// Afficher les feux verts et rouges
+			light_control();
+
+
+		}
 		break;
 	}
 	default:

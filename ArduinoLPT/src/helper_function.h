@@ -202,7 +202,92 @@ void set_light (const t_signal * light, l_state light_state ) {
 }
 
 void light_control (void) {
-
+	// On V10
+	if (aiguillage[A_NW].get_state() == s_droit) {
+		if (tracks[O_V9].occupied != 0) {
+			set_light(&traffic_lights[TL_V10],l_red);
+		} else {
+			set_light(&traffic_lights[TL_V10],l_green);
+		}
+	} else if (aiguillage[A_NW].get_state() == s_devie) {
+		if (tracks[O_V8].occupied != 0) {
+			set_light(&traffic_lights[TL_V10],l_red);
+		} else {
+			set_light(&traffic_lights[TL_V10],l_green);
+		}
+	} else {
+		// don't know the point state - be safe
+		set_light(&traffic_lights[TL_V10],l_red);
+	}
+	// On V7
+	if (aiguillage[A_NE].get_state() == s_droit) {
+		if (tracks[O_V5].occupied != 0) {
+			set_light(&traffic_lights[TL_V7],l_red);
+		} else {
+			set_light(&traffic_lights[TL_V7],l_green);
+		}
+	} else if (aiguillage[A_NE].get_state() == s_devie) {
+		set_light(&traffic_lights[TL_V7],l_red);
+	} else {
+		// don't know the point state - be safe
+		set_light(&traffic_lights[TL_V7],l_red);
+	}
+	// On V6
+	if (aiguillage[A_NE].get_state() == s_devie) {
+		if (tracks[O_V5].occupied != 0) {
+			set_light(&traffic_lights[TL_V6],l_red);
+		} else {
+			set_light(&traffic_lights[TL_V6],l_green);
+		}
+	} else if (aiguillage[A_NE].get_state() == s_droit) {
+		set_light(&traffic_lights[TL_V6],l_red);
+	} else {
+		// don't know the point state - be safe
+		set_light(&traffic_lights[TL_V6],l_red);
+	}
+	// On V5
+	if (aiguillage[A_SE].get_state() == s_droit) {
+		if (tracks[O_V4].occupied != 0) {
+			set_light(&traffic_lights[TL_V5],l_red);
+		} else {
+			set_light(&traffic_lights[TL_V5],l_green);
+		}
+	} else if (aiguillage[A_SE].get_state() == s_devie) {
+		if (tracks[O_V3].occupied != 0) {
+			set_light(&traffic_lights[TL_V5],l_red);
+		} else {
+			set_light(&traffic_lights[TL_V5],l_green);
+		}
+	} else {
+		// don't know the point state - be safe
+		set_light(&traffic_lights[TL_V5],l_red);
+	}
+	// On V1
+	if (aiguillage[A_SW].get_state() == s_devie) {
+		if (tracks[O_V10].occupied != 0) {
+			set_light(&traffic_lights[TL_V1],l_red);
+		} else {
+			set_light(&traffic_lights[TL_V1],l_green);
+		}
+	} else if (aiguillage[A_SW].get_state() == s_droit) {
+		set_light(&traffic_lights[TL_V1],l_red);
+	} else {
+		// don't know the point state - be safe
+		set_light(&traffic_lights[TL_V1],l_red);
+	}
+	// On V2
+	if (aiguillage[A_SW].get_state() == s_droit) {
+		if (tracks[O_V10].occupied != 0) {
+			set_light(&traffic_lights[TL_V2],l_red);
+		} else {
+			set_light(&traffic_lights[TL_V2],l_green);
+		}
+	} else if (aiguillage[A_SW].get_state() == s_devie) {
+		set_light(&traffic_lights[TL_V2],l_red);
+	} else {
+		// don't know the point state - be safe
+		set_light(&traffic_lights[TL_V2],l_red);
+	}
 }
 
 void (* const todo_in_idle[])(void) PROGMEM = {

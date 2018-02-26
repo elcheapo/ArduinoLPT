@@ -70,15 +70,3 @@ void I2c_Port::set_input_i2c(void) {
 
 }
 
-
-
-void I2c_Port::set_input(uint8_t mask) {
-	uint8_t ret;
-	input_mask |= mask;
-	// Set the INPUT PIN to 1
-	Wire.beginTransmission(i2c_address); // transmit to PCF8574
-	Wire.write(mask);
-	ret = Wire.endTransmission();
-	if (ret != 0) Serial.print(F("NoACK"));
-
-}
