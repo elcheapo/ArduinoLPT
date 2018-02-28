@@ -119,17 +119,26 @@ void alarm_current(void) {
 	}
 }
 uint8_t radio_packet[32], radio_count,radio_id;
+uint32_t radio_timer;
 
 void radio_get_packet_scan() {
 	if(radio_get_packet(radio_packet, radio_count, radio_id)) {
 		// We received something
 		lcd.pseudo_led(9,1);
+		radio_ok = 1;
 		if (radio_packet[0] == 2) { // That's a fine packet
 			Radiopot1.set_value((uint16_t)((radio_packet[3] << 8)+radio_packet[4]));
 			Radiopot2.set_value((uint16_t)((radio_packet[5] << 8)+radio_packet[6]));
 //			Serial.write('P');
 		}
+		radio_timer = millis() + 1000;
+	} else {
+		if (millis() >= radio_timer) {
+			// No radio signal received for 1 sec
+			lcd.pseudo_led(9,0); // turn off LED
+			radio_ok = 0;
 
+		}
 	}
 }
 

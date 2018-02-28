@@ -48,7 +48,8 @@ typedef struct {
 typedef struct {
 	uint8_t dcc_address;
 	uint8_t track_segment;
-	uint8_t current_speed;
+	locomem * loco;
+	uint8_t reversed;
 } t_loco_on_track;
 
 typedef struct {
@@ -156,14 +157,6 @@ const int8_t trips [][8] PROGMEM = {
 		{5,4,2,10,9,-10,7,50}
 };
 
-
-Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
-DCC_timer dcc_control;
-Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
-Potar pot1(1);
-Potar Radiopot1, Radiopot2;
-
-t_loco_on_track locos[5];
 #define MAX_TRACKS 10
 t_track tracks[MAX_TRACKS] = {
 		{0,0,&occupancy[0]}
@@ -177,6 +170,18 @@ t_track tracks[MAX_TRACKS] = {
 		,{0,0,&occupancy[8]}
 		,{0,0,&occupancy[9]}
 };
+
+
+Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
+DCC_timer dcc_control;
+Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
+Potar pot1(1);
+Potar Radiopot1, Radiopot2;
+
+uint8_t radio_ok;
+
+t_loco_on_track loco1, loco2;
+
 
 //Potar pot2(0);
 //Potar pot3(0);
@@ -213,6 +218,7 @@ void setup() {
 	which_one = 0;
 	current_alarm = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
+	radio_ok = 0;
 	Serial.begin(115200);
 	SPI.begin();
 	SPI.beginTransaction(SPISettings (8000000, MSBFIRST, SPI_MODE0));
@@ -523,14 +529,19 @@ void loop()
 					buzzer_on(1000);
 					break;
 				}
-				// Set PWM according to Radiopot1
-				position = Radiopot1.get();
-				if (position > 530) {
-					speed = position-520;
-					direction= forward;
-				} else if (position < 490) {
-					speed = 500-position;
-					direction= backward;
+				if (radio_ok != 0) {
+					// Set PWM according to Radiopot1
+					position = Radiopot1.get();
+					if (position > 530) {
+						speed = position-520;
+						direction= forward;
+					} else if (position < 490) {
+						speed = 500-position;
+						direction= backward;
+					} else {
+						speed = 0;
+						direction = off;
+					}
 				} else {
 					speed = 0;
 					direction = off;
@@ -546,7 +557,7 @@ void loop()
 				} else {
 					lcd.print(F("----"));
 				}
-				lcd.go(0,4);
+				lcd.go(0,5);
 				for (uint8_t i = 0; i < MAX_TRACKS; i++) {
 					if (tracks[i].occupied != 0) {
 						lcd.write('X');
@@ -569,8 +580,10 @@ void loop()
 		Serial.println(F("Digital"));
 
 		dcc_control.begin(digital);
+		// Activate main track, disable programming track
 		digitalWrite(A2,HIGH);
 		digitalWrite(A3,LOW);
+
 		lcd.menu(F("            "),
 				F(" DIGITAL    "),
 				F(" Adresse    "),
@@ -618,6 +631,9 @@ void loop()
 			uint16_t position;
 			uint8_t key,speed;
 			locomem * loco_ptr;
+			// Afficher les feux verts et rouges
+			light_control();
+
 			// Now update the display
 			delay(200);
 			if (current_alarm != 0) {
@@ -706,15 +722,19 @@ void loop()
 				if (loco_ptr != NULL) {
 					lcd.go(0,3);
 					lcd.print(loco_ptr->address);
-					position = Radiopot1.get();
+					if (radio_ok != 0) {
+						position = Radiopot1.get();
+					} else {
+						position=512;
+					}
 					if (position > 530) {
-						speed = (position-520) >> 2;
+						speed = ((position-520) >> 2) + 2 ;
 						loco_ptr->speed = speed;
 						lcd.go(4,3);
 						lcd.write(0x81);
 						lcd.print(speed);
-					} else if (position < 490) {
-						speed = ((500-position) >> 2) | 0x80;
+					} else if (position < 494) {
+						speed = (((500-position) >> 2) + 2) | 0x80;
 						loco_ptr->speed = speed;
 						lcd.go(4,3);
 						lcd.write(0x80);
@@ -732,15 +752,19 @@ void loop()
 				if (loco_ptr != NULL) {
 					lcd.go(0,4);
 					lcd.print(loco_ptr->address);
-					position = Radiopot2.get();
+					if (radio_ok != 0) {
+						position = Radiopot2.get();
+					} else {
+						position=512;
+					}
 					if (position > 530) {
-						speed = (position-520) >> 2;
+						speed = ((position-520) >> 2) + 2;
 						loco_ptr->speed = speed;
 						lcd.go(4,4);
 						lcd.write(0x81);
 						lcd.print(speed);
-					} else if (position < 490) {
-						speed = ((500-position) >> 2) | 0x80;
+					} else if (position < 494) {
+						speed = (((500-position) >> 2) + 2) | 0x80;
 						loco_ptr->speed = speed;
 						lcd.go(4,4);
 						lcd.write(0x80);
@@ -800,6 +824,7 @@ void loop()
 		station_mode = digital;
 		dcc_control.begin(digital);
 		dcc_control.set_direct();
+		// Power up Prog Track, disable main track
 		digitalWrite(A3,HIGH);
 		digitalWrite(A2,LOW);
 		lcd.menu(F("            "),
@@ -839,22 +864,336 @@ void loop()
 		}
 		break;
 	}
-	case 'C': {
+	case 'C' : {
+		// digital mode - Automatic
+		int8_t ret;
+		uint16_t value;
+		locomem * loco_ptr;
+		station_mode = digital;
+		uint16_t position;
+		uint8_t speed;
+
+
+		Serial.println(F("Digital"));
+		// 1) Read Loco address on prog track
+		uint8_t address,constructeur,version;
+		Serial.print(F("Reading Adress"));
+		delay(100);
+		station_mode = digital;
+		dcc_control.begin(digital);
+		dcc_control.set_direct();
+		// Power up Prog Track, disable main track
+		digitalWrite(A3,HIGH);
+		digitalWrite(A2,LOW);
 		lcd.menu(F("            "),
-				F(" Automatique"),
-				F("            "),
-				F("            "),
-				F("            "),
-				F("            "));
+				F(" Mettre une "),
+				F("Locomotive  "),
+				F("sur la voie "),
+				F("de garage   "),
+				F("            ")
+		);
+		delay(100);
+		int8_t loco_detected = 0;
+		while (loco_detected == 0) {
+			if (set_programmer(&dcc_control,CURRENT_SENSE) == true) {
+				// Loco detected
+				address = direct_mode_read(1);
+				constructeur = direct_mode_read(8);
+				version = direct_mode_read(7);
+				lcd.go(0,5);
+				lcd.print(F("Detected"));
+				delay(100);
+				loco_detected = 1;
+			} else {
+				lcd.go(0,5);
+				lcd.print(F("Pas de Loco"));
+				delay(100);
+			}
+			if (kbd.get_key_debounced(last) == '*') {
+				loco_detected = -1;
+			}
+
+		}
+		// Loco detected at address "address"
+		loco1.loco = new_loco(address);
+		if ( (loco_detected == -1) || (loco1.loco == NULL) )  break;
+		// Loco controlled by POT 1
+		loco1.loco->control_by = 1;
+		// Start normal DCC mode
+		dcc_control.set_queue();
+
+		//switch on Garage + main track
+		digitalWrite(A3,HIGH);
+		digitalWrite(A2,HIGH);
+		lcd.menu(F("            "),
+				F(" Demarrer la"),
+				F("Locomotive  "),
+				F("vers la voie"),
+				F("principale  "),
+				F("Adr:        ")
+		);
+		lcd.go (5,5);
+		lcd.print(address, 10);
+		delay(200);
+		// Loco controled by Radiopot1
 		while(1) {
-			delay(50);
-			// Do we want to exit ?
-			key = kbd.get_key_debounced(last);
-			if (key == '*') break;
+			if (radio_ok != 0) {
+				position = Radiopot1.get();
+			} else {
+				position=512;
+			}
+			if (position > 530) {
+				speed = ((position-520) >> 2) + 2 ;
+			} else if (position < 494) {
+				speed = (((500-position) >> 2) + 2) | 0x80;
+			} else {
+				speed = 1;
+			}
+			loco1.loco->speed = speed;
+
+			/**************************************************************************************************************/
+
+		}
+
+
+
+
+
+		dcc_control.begin(digital);
+		// Activate main track, disable programming track
+		digitalWrite(A2,HIGH);
+		digitalWrite(A3,LOW);
+
+		lcd.menu(F("            "),
+				F(" DIGITAL    "),
+				F(" Adresse    "),
+				F("Loc 1:      "),
+				F("Loc 2:      "),
+				F("            ")
+		);
+		Serial.write('1');
+		dcc_control.set_queue();
+		delay(200);
+		// Get address for Loco 1
+		lcd.go(6,3);
+		ret = getint(value);
+		if (ret == 0) {
+			if (value != 0) {
+				loco_ptr= new_loco(value);
+				if (loco_ptr != NULL) loco_ptr->control_by = 1;
+			}
+		}
+		Serial.write('2');
+		// Get address for Loco 2
+		lcd.go(6,4);
+		ret = getint(value);
+		if (ret == 0) {
+			if (value != 0) {
+				loco_ptr= new_loco(value);
+				if (loco_ptr != NULL) loco_ptr->control_by = 2;
+			}
+		}
+#if 0
+		Serial.write('3');
+		// Get address for Loco 3
+		lcd.go(6,5);
+		ret = getint(value);
+		if (ret == 0) {
+			if (value != 0) {
+				loco_ptr= new_loco(value);
+				if (loco_ptr != NULL) loco_ptr->control_by = 3;
+			}
+		}
+#endif
+		// At this point we have up to 3 loco ready
+		// We can now read the pot values to set the speed ...
+		while (1) {
+			uint16_t position;
+			uint8_t key,speed;
+			locomem * loco_ptr;
 			// Afficher les feux verts et rouges
 			light_control();
 
+			// Now update the display
+			delay(200);
+			if (current_alarm != 0) {
+				lcd.menu(F("            "),
+						F(" DIGITAL    "),
+						F(" COURT      "),
+						F("    CIRCUIT "),
+						F("            "),
+						F(" * : Sortie "));
+				key=kbd.get_key_debounced(last);
+				if (key == '*') {
+					current_alarm = 0;
+					break;
+				}
+			} else {
+				lcd.menu(F("            "),
+						F(" DIGITAL    "),
+						F("Adr : Speed "),
+						F("    :       "),
+						F("    :       "),
+						F("            ")
+				);
+				key = kbd.get_key_debounced(last);
+				if (key == '*') break;
+				loco_ptr = find_control(1);
+				// control function for loco 1
+				switch (key) {
+#if 0
+				case 'A':
+					aiguillage.set_state(s_droit);
+					break;
+				case 'B':
+					aiguillage.set_state(s_devie);
+					break;
+#endif
+					// Key 0 to 9 : functions 0 to 9
+				case '0' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->fl ^= 0x01; // fct 0
+					break;
+				}
+				case '1' : {
+					if (loco_ptr==NULL) break; // fct 1
+					loco_ptr->f4_f1 ^= 0x01;
+					break;
+				}
+				case '2' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f4_f1 ^= 0x02; //fct 2
+					break;
+				}
+				case '3' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f4_f1 ^= 0x04; // fct 3
+					break;
+				}
+				case '4' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f4_f1 ^= 0x08; // fct 4
+					break;
+				}
+				case '5' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f8_f5 ^= 0x01; // fct 5
+					break;
+				}
+				case '6' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f8_f5 ^= 0x02; break; // fct 6
+				}
+				case '7' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f8_f5 ^= 0x04; break; // fct 7
+				}
+				case '8' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f8_f5 ^= 0x08; break; // fct 8
+				}
+				case '9' : {
+					if (loco_ptr==NULL) break;
+					loco_ptr->f12_f9 ^= 0x01; break; // fct 9
+				}
 
+				}
+				// Loco controled by Radiopot1
+				if (loco_ptr != NULL) {
+					lcd.go(0,3);
+					lcd.print(loco_ptr->address);
+					if (radio_ok != 0) {
+						position = Radiopot1.get();
+					} else {
+						position=512;
+					}
+					if (position > 530) {
+						speed = ((position-520) >> 2) + 2 ;
+						loco_ptr->speed = speed;
+						lcd.go(4,3);
+						lcd.write(0x81);
+						lcd.print(speed);
+					} else if (position < 494) {
+						speed = (((500-position) >> 2) + 2) | 0x80;
+						loco_ptr->speed = speed;
+						lcd.go(4,3);
+						lcd.write(0x80);
+						lcd.print(speed & 0x7f);
+					} else {
+						loco_ptr->speed = 1;
+						lcd.go(4,3);
+						lcd.write('-');
+						lcd.print(F(" 0"));
+					}
+					loco_ptr->speed = speed;
+				}
+				// Loco controled by pot2
+				loco_ptr = find_control(2);
+				if (loco_ptr != NULL) {
+					lcd.go(0,4);
+					lcd.print(loco_ptr->address);
+					if (radio_ok != 0) {
+						position = Radiopot2.get();
+					} else {
+						position=512;
+					}
+					if (position > 530) {
+						speed = ((position-520) >> 2) + 2;
+						loco_ptr->speed = speed;
+						lcd.go(4,4);
+						lcd.write(0x81);
+						lcd.print(speed);
+					} else if (position < 494) {
+						speed = (((500-position) >> 2) + 2) | 0x80;
+						loco_ptr->speed = speed;
+						lcd.go(4,4);
+						lcd.write(0x80);
+						lcd.print(speed & 0x7f);
+					} else {
+						loco_ptr->speed = 1;
+						lcd.go(4,4);
+						lcd.write('-');
+						lcd.print(F(" 0"));
+					}
+				}
+#if 0
+
+				// Loco controled by pot3
+				loco_ptr = find_control(3);
+				if (loco_ptr != NULL) {
+					lcd.go(0,5);
+					lcd.print(loco_ptr->address);
+					position = pot3.get();
+					if (position > 530) {
+						speed = (position-520) >> 2;
+						loco_ptr->speed = speed;
+						lcd.go(4,5);
+						lcd.write(0x81);
+						lcd.print(speed);
+					} else if (position < 490) {
+						speed = ((500-position) >> 2) | 0x80;
+						loco_ptr->speed = speed;
+						lcd.go(4,5);
+						lcd.write(0x80);
+						lcd.print(speed & 0x7f);
+					} else {
+						loco_ptr->speed = 1;
+						lcd.go(4,5);
+						lcd.write('-');
+						lcd.print(F(" 0"));
+					}
+				}
+#endif
+				lcd.go(0,5);
+				for (uint8_t i = 0; i < MAX_TRACKS; i++) {
+					if (tracks[i].occupied != 0) {
+						lcd.write('X');
+					} else {
+						lcd.write('-');
+					}
+				}
+
+			}
 		}
 		break;
 	}
