@@ -317,7 +317,8 @@ void (* const todo_in_idle[])(void) PROGMEM = {
 		&alarm_current,
 		&stop_buzzer,
 		&radio_get_packet_scan,
-		&current_detection
+		&current_detection,
+		&light_control
 };
 #define NB_TASK (sizeof(todo_in_idle)/sizeof(void(*)()))
 

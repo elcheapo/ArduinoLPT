@@ -26,17 +26,17 @@
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/cores/arduino"/>
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/variants/standard"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/src"/>
-									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Io_port/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Relay/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Aiguillage/src"/>
-									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/potar/src"/>
+									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/NRF24L01/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/dcc_timer/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/dcc-cv"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/I2C_keyboard/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Nokia5510/src"/>
+									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/potar/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Aiguillage/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/I2C_keyboard/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Io_port/src"/>
@@ -89,17 +89,17 @@
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/cores/arduino"/>
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/variants/standard"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/src"/>
-									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Io_port/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Relay/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Aiguillage/src"/>
-									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/potar/src"/>
+									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/NRF24L01/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/dcc_timer/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/dcc-cv"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/I2C_keyboard/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Nokia5510/src"/>
+									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/potar/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Aiguillage/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/I2C_keyboard/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Io_port/src"/>
@@ -152,17 +152,17 @@
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/cores/arduino"/>
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/variants/standard"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/src"/>
-									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/Wire/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Io_port/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Relay/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Aiguillage/src"/>
-									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/potar/src"/>
+									<listOptionValue builtIn="false" value="${HOME}/.platformio/packages/framework-arduinoavr/libraries/__cores__/arduino/SPI/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/NRF24L01/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/dcc_timer/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/dcc-cv"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/I2C_keyboard/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Nokia5510/src"/>
+									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/potar/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Aiguillage/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/I2C_keyboard/src"/>
 									<listOptionValue builtIn="false" value="${HOME}/git/ArduinoLPT/ArduinoLPT/lib/Io_port/src"/>

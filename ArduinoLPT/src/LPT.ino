@@ -50,6 +50,8 @@ typedef struct {
 	uint8_t track_segment;
 	locomem * loco;
 	uint8_t reversed;
+	uint8_t constructeur;
+	uint8_t version;
 } t_loco_on_track;
 
 typedef struct {
@@ -866,9 +868,6 @@ void loop()
 	}
 	case 'C' : {
 		// digital mode - Automatic
-		int8_t ret;
-		uint16_t value;
-		locomem * loco_ptr;
 		station_mode = digital;
 		uint16_t position;
 		uint8_t speed;
@@ -879,9 +878,12 @@ void loop()
 		uint8_t address,constructeur,version;
 		Serial.print(F("Reading Adress"));
 		delay(100);
+		aiguillage[A_GARAGE].set_state(s_devie);
+
 		station_mode = digital;
 		dcc_control.begin(digital);
 		dcc_control.set_direct();
+
 		// Power up Prog Track, disable main track
 		digitalWrite(A3,HIGH);
 		digitalWrite(A2,LOW);
@@ -914,13 +916,17 @@ void loop()
 			}
 
 		}
+		if (loco_detected == -1 ) break;
 		// Loco detected at address "address"
 		loco1.loco = new_loco(address);
-		if ( (loco_detected == -1) || (loco1.loco == NULL) )  break;
+		if (loco1.loco == NULL) break;
 		// Loco controlled by POT 1
 		loco1.loco->control_by = 1;
+		loco1.constructeur = constructeur;
+		loco1.version = version;
 		// Start normal DCC mode
 		dcc_control.set_queue();
+		aiguillage[A_GARAGE].set_state(s_droit);
 
 		//switch on Garage + main track
 		digitalWrite(A3,HIGH);
@@ -932,10 +938,11 @@ void loop()
 				F("principale  "),
 				F("Adr:        ")
 		);
+		buzzer_on(200);
 		lcd.go (5,5);
 		lcd.print(address, 10);
 		delay(200);
-		// Loco controled by Radiopot1
+		// Loco controlled by Radiopot1
 		while(1) {
 			if (radio_ok != 0) {
 				position = Radiopot1.get();
@@ -950,62 +957,186 @@ void loop()
 				speed = 1;
 			}
 			loco1.loco->speed = speed;
+			// Are we seeing the loco on track 1 yet ?
+			if (tracks[O_V1].occupied != 0) {
+				// The guy moved the loco in the correct direction so now we know the reverse/direct direction ...
+				loco1.reversed = speed & 0x80;
 
-			/**************************************************************************************************************/
+			}
+			if (tracks[O_V3].occupied != 0) {
+				// Now we take over the loco
+				loco1.reversed = speed & 0x80;
+				buzzer_on(200);
+				loco1.loco->speed = 1;
+				break; // from the while loop
+			}
+			delay (200);
+		}
+		aiguillage[A_GARAGE].set_state(s_devie);
+		aiguillage[A_SW].set_state(s_devie);
+		aiguillage[A_NW].set_state(s_droit);
+		aiguillage[A_NE].set_state(s_droit);
+		aiguillage[A_SE].set_state(s_devie);
+		if (loco1.reversed  == 0) {
+			loco1.loco->speed = 0x80 + 50;
+		} else {
+			loco1.loco->speed = 50;
+		}
+		// Now wait until we see the loco in O_V7
+		while (tracks[O_V10].occupied == 0);
+		buzzer_on(100);
+		while (tracks[O_V9].occupied == 0);
+		buzzer_on(100);
+		while (tracks[O_V7].occupied == 0);
+		lcd.menu(F("            "),
+				F(" Loco 1     "),
+				F(" en         "),
+				F(" position   "),
+				F("            "),
+				F("            ")
+		);
+		delay(2000);
+		loco1.loco->speed = 1;
+		buzzer_on(200);
+		/********************************************************************/
+		// No do the second loco
+		/********************************************************************/
+		aiguillage[A_GARAGE].set_state(s_devie);
+
+		// Power up Prog Track, disable main track
+		digitalWrite(A3,HIGH);
+		digitalWrite(A2,LOW);
+		lcd.menu(F("            "),
+				F(" Mettre une "),
+				F("Locomotive  "),
+				F("sur la voie "),
+				F("de garage   "),
+				F("            ")
+		);
+		delay(100);
+		loco_detected = 0;
+		while (loco_detected == 0) {
+			if (set_programmer(&dcc_control,CURRENT_SENSE) == true) {
+				// Loco detected
+				address = direct_mode_read(1);
+				constructeur = direct_mode_read(8);
+				version = direct_mode_read(7);
+				lcd.go(0,5);
+				lcd.print(F("Detected"));
+				delay(100);
+				loco_detected = 1;
+			} else {
+				lcd.go(0,5);
+				lcd.print(F("Pas de Loco"));
+				delay(100);
+			}
+			if (kbd.get_key_debounced(last) == '*') {
+				loco_detected = -1;
+			}
 
 		}
+		if (loco_detected == -1 ) break;
+		// Loco detected at address "address"
+		loco2.loco = new_loco(address);
+		if (loco2.loco == NULL) break;
+		// Loco controlled by POT 1
+		loco2.loco->control_by = 1;
+		loco2.constructeur = constructeur;
+		loco2.version = version;
+		// Start normal DCC mode
+		dcc_control.set_queue();
+		aiguillage[A_GARAGE].set_state(s_droit);
+
+		//switch on Garage + main track
+		digitalWrite(A3,HIGH);
+		digitalWrite(A2,HIGH);
+		lcd.menu(F("            "),
+				F(" Demarrer la"),
+				F("Locomotive  "),
+				F("vers la voie"),
+				F("principale  "),
+				F("Adr:        ")
+		);
+		buzzer_on(200);
+		lcd.go (5,5);
+		lcd.print(address, 10);
+		delay(300);
+		// Loco controlled by Radiopot1
+		while(1) {
+			if (radio_ok != 0) {
+				position = Radiopot1.get();
+			} else {
+				position=512;
+			}
+			if (position > 530) {
+				speed = ((position-520) >> 2) + 2 ;
+			} else if (position < 494) {
+				speed = (((500-position) >> 2) + 2) | 0x80;
+			} else {
+				speed = 1;
+			}
+			loco2.loco->speed = speed;
+			// Are we seeing the loco on track 1 yet ?
+			if (tracks[O_V1].occupied != 0) {
+				// The guy moved the loco in the correct direction so now we know the reverse/direct direction ...
+				loco2.reversed = speed & 0x80;
+
+			}
+			if (tracks[O_V3].occupied != 0) {
+				// Now we take over the loco
+				loco2.reversed = speed & 0x80;
+				buzzer_on(200);
+				loco2.loco->speed = 1;
+				break; // from the while loop
+			}
+			delay(200);
+		}
+
+		aiguillage[A_GARAGE].set_state(s_devie);
+		aiguillage[A_SW].set_state(s_devie);
+		aiguillage[A_NW].set_state(s_devie);
+		aiguillage[A_NE].set_state(s_devie);
+		aiguillage[A_SE].set_state(s_devie);
+		if (loco2.reversed  == 0) {
+			loco2.loco->speed = 0x80 + 50;
+		} else {
+			loco2.loco->speed = 50;
+		}
+		// Now wait until we see the loco in O_V6
+		while (tracks[O_V10].occupied == 0);
+		buzzer_on(100);
+		delay(150);
+		while (tracks[O_V8].occupied == 0);
+		buzzer_on(100);
+		delay(150);
+		while (tracks[O_V6].occupied == 0);
+		lcd.menu(F("            "),
+				F(" Loco 2     "),
+				F(" en         "),
+				F(" position   "),
+				F("            "),
+				F("            ")
+		);
+		delay(2000);
+		loco2.loco->speed = 1;
+		buzzer_on(200);
 
 
+		/**************************************************************************************************************/
+		loco1.loco->control_by = 1;
+		loco2.loco->control_by = 2;
 
+
+// Now we are ready to run ... the loco should never bump into each other ...
 
 
 		dcc_control.begin(digital);
+		dcc_control.set_queue();
 		// Activate main track, disable programming track
 		digitalWrite(A2,HIGH);
 		digitalWrite(A3,LOW);
 
-		lcd.menu(F("            "),
-				F(" DIGITAL    "),
-				F(" Adresse    "),
-				F("Loc 1:      "),
-				F("Loc 2:      "),
-				F("            ")
-		);
-		Serial.write('1');
-		dcc_control.set_queue();
-		delay(200);
-		// Get address for Loco 1
-		lcd.go(6,3);
-		ret = getint(value);
-		if (ret == 0) {
-			if (value != 0) {
-				loco_ptr= new_loco(value);
-				if (loco_ptr != NULL) loco_ptr->control_by = 1;
-			}
-		}
-		Serial.write('2');
-		// Get address for Loco 2
-		lcd.go(6,4);
-		ret = getint(value);
-		if (ret == 0) {
-			if (value != 0) {
-				loco_ptr= new_loco(value);
-				if (loco_ptr != NULL) loco_ptr->control_by = 2;
-			}
-		}
-#if 0
-		Serial.write('3');
-		// Get address for Loco 3
-		lcd.go(6,5);
-		ret = getint(value);
-		if (ret == 0) {
-			if (value != 0) {
-				loco_ptr= new_loco(value);
-				if (loco_ptr != NULL) loco_ptr->control_by = 3;
-			}
-		}
-#endif
-		// At this point we have up to 3 loco ready
+		// At this point we have 2 loco ready
 		// We can now read the pot values to set the speed ...
 		while (1) {
 			uint16_t position;
@@ -1041,14 +1172,6 @@ void loop()
 				loco_ptr = find_control(1);
 				// control function for loco 1
 				switch (key) {
-#if 0
-				case 'A':
-					aiguillage.set_state(s_droit);
-					break;
-				case 'B':
-					aiguillage.set_state(s_devie);
-					break;
-#endif
 					// Key 0 to 9 : functions 0 to 9
 				case '0' : {
 					if (loco_ptr==NULL) break;
@@ -1096,7 +1219,24 @@ void loop()
 					if (loco_ptr==NULL) break;
 					loco_ptr->f12_f9 ^= 0x01; break; // fct 9
 				}
-
+				case 'A' : {
+					aiguillage[A_NW].set_state(s_droit);
+					aiguillage[A_NE].set_state(s_droit);
+				}
+				case 'B' : {
+					aiguillage[A_NW].set_state(s_devie);
+					aiguillage[A_NE].set_state(s_devie);
+				}
+				case 'C' : {
+					aiguillage[A_SW].set_state(s_devie);
+					aiguillage[A_SE].set_state(s_devie);
+				}
+				case 'D' : {
+					aiguillage[A_SW].set_state(s_droit);
+					aiguillage[A_SE].set_state(s_droit);
+				}
+				default:
+					break;
 				}
 				// Loco controled by Radiopot1
 				if (loco_ptr != NULL) {
@@ -1156,34 +1296,7 @@ void loop()
 						lcd.print(F(" 0"));
 					}
 				}
-#if 0
 
-				// Loco controled by pot3
-				loco_ptr = find_control(3);
-				if (loco_ptr != NULL) {
-					lcd.go(0,5);
-					lcd.print(loco_ptr->address);
-					position = pot3.get();
-					if (position > 530) {
-						speed = (position-520) >> 2;
-						loco_ptr->speed = speed;
-						lcd.go(4,5);
-						lcd.write(0x81);
-						lcd.print(speed);
-					} else if (position < 490) {
-						speed = ((500-position) >> 2) | 0x80;
-						loco_ptr->speed = speed;
-						lcd.go(4,5);
-						lcd.write(0x80);
-						lcd.print(speed & 0x7f);
-					} else {
-						loco_ptr->speed = 1;
-						lcd.go(4,5);
-						lcd.write('-');
-						lcd.print(F(" 0"));
-					}
-				}
-#endif
 				lcd.go(0,5);
 				for (uint8_t i = 0; i < MAX_TRACKS; i++) {
 					if (tracks[i].occupied != 0) {
