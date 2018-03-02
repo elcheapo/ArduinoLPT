@@ -54,6 +54,8 @@ typedef struct {
 	uint8_t version;
 } t_loco_on_track;
 
+typedef enum {horaire,antihoraire} sens;
+
 typedef struct {
 	t_io red_light;
 	t_io green_light;
@@ -983,11 +985,14 @@ void loop()
 			loco1.loco->speed = 50;
 		}
 		// Now wait until we see the loco in O_V7
-		while (tracks[O_V10].occupied == 0);
+		while (tracks[O_V10].occupied == 0)
+			delay(100);
 		buzzer_on(100);
-		while (tracks[O_V9].occupied == 0);
+		while (tracks[O_V9].occupied == 0)
+			delay(100);
 		buzzer_on(100);
-		while (tracks[O_V7].occupied == 0);
+		while (tracks[O_V7].occupied == 0)
+			delay(100);
 		lcd.menu(F("            "),
 				F(" Loco 1     "),
 				F(" en         "),
@@ -1103,13 +1108,14 @@ void loop()
 			loco2.loco->speed = 50;
 		}
 		// Now wait until we see the loco in O_V6
-		while (tracks[O_V10].occupied == 0);
+		while (tracks[O_V10].occupied == 0)
+			delay(100);
 		buzzer_on(100);
-		delay(150);
-		while (tracks[O_V8].occupied == 0);
+		while (tracks[O_V8].occupied == 0)
+			delay(100);
 		buzzer_on(100);
-		delay(150);
-		while (tracks[O_V6].occupied == 0);
+		while (tracks[O_V6].occupied == 0)
+			delay(100);
 		lcd.menu(F("            "),
 				F(" Loco 2     "),
 				F(" en         "),
@@ -1142,8 +1148,6 @@ void loop()
 			uint16_t position;
 			uint8_t key,speed;
 			locomem * loco_ptr;
-			// Afficher les feux verts et rouges
-			light_control();
 
 			// Now update the display
 			delay(200);
@@ -1162,14 +1166,15 @@ void loop()
 			} else {
 				lcd.menu(F("            "),
 						F(" DIGITAL    "),
-						F("Adr : Speed "),
-						F("    :       "),
-						F("    :       "),
+						F("Adr:Vite:seg"),
+						F("   :    :   "),
+						F("   :    :   "),
 						F("            ")
 				);
 				key = kbd.get_key_debounced(last);
 				if (key == '*') break;
-				loco_ptr = find_control(1);
+//				loco_ptr = find_control(1);
+				loco_ptr = loco1.loco;
 				// control function for loco 1
 				switch (key) {
 					// Key 0 to 9 : functions 0 to 9
@@ -1250,25 +1255,28 @@ void loop()
 					if (position > 530) {
 						speed = ((position-520) >> 2) + 2 ;
 						loco_ptr->speed = speed;
-						lcd.go(4,3);
+						lcd.go(3,3);
 						lcd.write(0x81);
 						lcd.print(speed);
 					} else if (position < 494) {
 						speed = (((500-position) >> 2) + 2) | 0x80;
 						loco_ptr->speed = speed;
-						lcd.go(4,3);
+						lcd.go(3,3);
 						lcd.write(0x80);
 						lcd.print(speed & 0x7f);
 					} else {
 						loco_ptr->speed = 1;
-						lcd.go(4,3);
+						lcd.go(3,3);
 						lcd.write('-');
 						lcd.print(F(" 0"));
 					}
 					loco_ptr->speed = speed;
+					lcd.go(9,3);
+					lcd.print(loco1.track_segment,10);
 				}
 				// Loco controled by pot2
-				loco_ptr = find_control(2);
+//				loco_ptr = find_control(2);
+				loco_ptr = loco2.loco;
 				if (loco_ptr != NULL) {
 					lcd.go(0,4);
 					lcd.print(loco_ptr->address);
@@ -1280,22 +1288,24 @@ void loop()
 					if (position > 530) {
 						speed = ((position-520) >> 2) + 2;
 						loco_ptr->speed = speed;
-						lcd.go(4,4);
+						lcd.go(3,4);
 						lcd.write(0x81);
 						lcd.print(speed);
 					} else if (position < 494) {
 						speed = (((500-position) >> 2) + 2) | 0x80;
 						loco_ptr->speed = speed;
-						lcd.go(4,4);
+						lcd.go(3,4);
 						lcd.write(0x80);
 						lcd.print(speed & 0x7f);
 					} else {
 						loco_ptr->speed = 1;
-						lcd.go(4,4);
+						lcd.go(3,4);
 						lcd.write('-');
 						lcd.print(F(" 0"));
 					}
 				}
+				lcd.go(9,4);
+				lcd.print(loco2.track_segment,10);
 
 				lcd.go(0,5);
 				for (uint8_t i = 0; i < MAX_TRACKS; i++) {

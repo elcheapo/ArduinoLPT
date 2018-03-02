@@ -20,10 +20,9 @@ private:
 	const relais_t * act_droit;
 	const relais_t * act_devie;
 	a_type type;
-	a_state state;
-
 protected:
 public:
+	a_state state;
 	aiguille(const relais_t * _act_droit, const relais_t * _act_devie, a_type _type);
 	void set_state(a_state position);
 	a_state get_state(void);

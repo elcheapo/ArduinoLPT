@@ -77,6 +77,14 @@ void i2c_5 (void) {
 	i2c_port5.write_i2c();
 }
 
+uint32_t scan_time;
+void scan_keyboard(void) {
+	// Only scan keyboard every 250ms
+	if (millis() <= scan_time) return;
+	kbd.scan();
+	scan_time = millis()+250;
+}
+
 
 void scan_col_0(void) {
 	kbd.scan_col(0);
@@ -299,11 +307,180 @@ void light_control (void) {
 	}
 }
 
+sens quel_sens(t_loco_on_track * testloco) {
+	if ((testloco->loco->speed & 0x80) == testloco->reversed) {
+		return antihoraire;
+	}
+	return horaire;
+}
+
+uint8_t find_next_segment(t_loco_on_track & loco, uint8_t current_segment) {
+	if (quel_sens(&loco) == horaire) {
+		switch (current_segment){
+		case O_V1:
+		case O_V2:
+			return O_V10;
+		case O_V3:
+			return O_V1;
+		case O_V4:
+			return O_V2;
+		case O_V5: {
+			if (aiguillage[A_SE].get_state() == s_droit)
+				return O_V4;
+			else
+				return O_V3;
+		}
+		case O_V6:
+		case O_V7:
+			return O_V5;
+		case O_V8:
+			return O_V6;
+		case O_V9:
+			return O_V7;
+		case O_V10: {
+			if (aiguillage[A_NW].get_state() == s_droit)
+				return O_V9;
+			else
+				return O_V8;
+		}
+		} // end case
+	} else { // antihoraire ...
+		switch (current_segment){
+		case O_V1:
+			return O_V3;
+		case O_V2:
+			return O_V4;
+		case O_V3:
+		case O_V4:
+			return O_V5;
+		case O_V5: {
+			if (aiguillage[A_NE].get_state() == s_droit)
+				return O_V7;
+			else
+				return O_V6;
+		}
+		case O_V6:
+			return O_V8;
+		case O_V7:
+			return O_V9;
+		case O_V8:
+		case O_V9:
+			return O_V10;
+		case O_V10: {
+			if (aiguillage[A_SW].get_state() == s_droit)
+				return O_V2;
+			else
+				return O_V1;
+		}
+		} // end case
+	}
+	return (0xFF);
+}
+
+uint8_t is_it_loco(t_loco_on_track &loco1,uint8_t segment) {
+	uint8_t	found=0;
+	switch(segment) {
+	case O_V1: {
+		if ((loco1.track_segment == O_V3) && (quel_sens(&loco1) == horaire)) found= 1;
+		if ((loco1.track_segment == O_V10) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
+		break;
+		}
+	case O_V2: {
+		if ((loco1.track_segment == O_V4) && (quel_sens(&loco1) == horaire)) found= 1;
+		if ((loco1.track_segment == O_V10) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
+		break;
+		}
+	case O_V3: {
+		if ((loco1.track_segment == O_V1) && (quel_sens(&loco1) == antihoraire)) found= 1;
+		if ((loco1.track_segment == O_V5) && (quel_sens(&loco1) == horaire) && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
+		break;
+		}
+	case O_V4: {
+		if ((loco1.track_segment == O_V2) && (quel_sens(&loco1) == antihoraire)) found= 1;
+		if ((loco1.track_segment == O_V5) && (quel_sens(&loco1) == horaire) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
+		break;
+		}
+	case O_V5: {
+		if ((loco1.track_segment == O_V7) && (quel_sens(&loco1) == horaire) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V6) && (quel_sens(&loco1) == horaire) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V3) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V4) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
+		break;
+		}
+	case O_V6: {
+		if ((loco1.track_segment == O_V8) && (quel_sens(&loco1) == horaire)) found= 1;
+		if ((loco1.track_segment == O_V5) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
+		break;
+		}
+	case O_V7: {
+		if ((loco1.track_segment == O_V9) && (quel_sens(&loco1) == horaire)) found= 1;
+		if ((loco1.track_segment == O_V5) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
+		break;
+		}
+	case O_V8: {
+		if ((loco1.track_segment == O_V6) && (quel_sens(&loco1) == antihoraire)) found= 1;
+		if ((loco1.track_segment == O_V10) && (quel_sens(&loco1) == horaire) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
+		break;
+		}
+	case O_V9: {
+		if ((loco1.track_segment == O_V7) && (quel_sens(&loco1) == antihoraire)) found= 1;
+		if ((loco1.track_segment == O_V10) && (quel_sens(&loco1) == horaire) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
+		break;
+		}
+	case O_V10: {
+		if ((loco1.track_segment == O_V2) && (quel_sens(&loco1) == horaire) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V1) && (quel_sens(&loco1) == horaire) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V9) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V8) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
+		break;
+		}
+	default:
+		break;
+	}
+	return found;
+}
+
+uint32_t loco_last_time;
+void follow_loco(void) {
+	uint8_t i;
+	for (i=0; i<MAX_TRACKS; i++) {
+		if (tracks[i].timestamp > loco_last_time) {
+			// something has been detected on this track segment since last time we checked
+			// Is it loco1 ? loco1 was last seen in loco1.track_segment
+			if (is_it_loco(loco1,i) != 0 ) {
+				loco1.track_segment = i;
+			// or loco2 ?
+			} else if (is_it_loco(loco2,i) != 0 ) {
+				loco2.track_segment = i;
+			} else {
+				buzzer_on(50); // something weird happened ...
+				Serial.print(F("Unidentified thing on track :"));
+				Serial.println(i,10);
+			}
+		}
+	}
+	// Also make sure the locos are still where they should be ...
+	if (tracks[loco1.track_segment].occupied == 0) {
+		// We lost loco1 ???
+		buzzer_on(50);
+		Serial.println(F("Lost LOCO1"));
+	}
+	if (tracks[loco2.track_segment].occupied == 0) {
+		// We lost loco21 ???
+		buzzer_on(50);
+		Serial.println(F("Lost LOCO2"));
+	}
+
+
+	loco_last_time = millis();
+}
+
 void (* const todo_in_idle[])(void) PROGMEM = {
-		&scan_col_0,
-		&scan_col_1,
-		&scan_col_2,
-		&scan_col_3,
+//		&scan_col_0,
+//		&scan_col_1,
+//		&scan_col_2,
+//		&scan_col_3,
+		&scan_keyboard,
 		&i2c_1,
 		&i2c_2,
 		&i2c_3,
@@ -318,7 +495,8 @@ void (* const todo_in_idle[])(void) PROGMEM = {
 		&stop_buzzer,
 		&radio_get_packet_scan,
 		&current_detection,
-		&light_control
+		&light_control,
+		&follow_loco
 };
 #define NB_TASK (sizeof(todo_in_idle)/sizeof(void(*)()))
 
