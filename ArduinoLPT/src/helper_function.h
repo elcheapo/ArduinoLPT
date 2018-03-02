@@ -80,9 +80,9 @@ void i2c_5 (void) {
 uint32_t scan_time;
 void scan_keyboard(void) {
 	// Only scan keyboard every 250ms
-	if (millis() <= scan_time) return;
+	if (scan_time > millis()) return;
 	kbd.scan();
-	scan_time = millis()+250;
+	scan_time = millis()+100;
 }
 
 
@@ -443,6 +443,7 @@ uint8_t is_it_loco(t_loco_on_track &loco1,uint8_t segment) {
 uint32_t loco_last_time;
 void follow_loco(void) {
 	uint8_t i;
+	if(enable_follow_loco == 0) return;
 	for (i=0; i<MAX_TRACKS; i++) {
 		if (tracks[i].timestamp > loco_last_time) {
 			// something has been detected on this track segment since last time we checked

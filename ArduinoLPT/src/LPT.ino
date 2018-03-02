@@ -185,6 +185,7 @@ Potar Radiopot1, Radiopot2;
 uint8_t radio_ok;
 
 t_loco_on_track loco1, loco2;
+uint8_t enable_follow_loco;
 
 
 //Potar pot2(0);
@@ -223,6 +224,9 @@ void setup() {
 	current_alarm = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
 	radio_ok = 0;
+	enable_follow_loco = 0;
+	loco_last_time = 0;
+	scan_time = 0;
 	Serial.begin(115200);
 	SPI.begin();
 	SPI.beginTransaction(SPISettings (8000000, MSBFIRST, SPI_MODE0));
@@ -1089,7 +1093,6 @@ void loop()
 			}
 			if (tracks[O_V3].occupied != 0) {
 				// Now we take over the loco
-				loco2.reversed = speed & 0x80;
 				buzzer_on(200);
 				loco2.loco->speed = 1;
 				break; // from the while loop
@@ -1129,10 +1132,11 @@ void loop()
 
 
 		/**************************************************************************************************************/
-		loco1.loco->control_by = 1;
-		loco2.loco->control_by = 2;
-
-
+//		loco1.loco->control_by = 1;
+//		loco2.loco->control_by = 2;
+		loco1.track_segment = 7;
+		loco2.track_segment = 6;
+		enable_follow_loco = 1;
 // Now we are ready to run ... the loco should never bump into each other ...
 
 
