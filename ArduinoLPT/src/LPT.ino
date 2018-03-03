@@ -88,16 +88,16 @@ I2c_Port i2c_port5(0x25);
 
 
 const t_io occupancy[] PROGMEM = {
-		{&i2c_port1, 0x0} // segment de voie N°1
-		,{&i2c_port1, 0x0} // segment de voie N°2
+		{&i2c_port3, 0x01} // segment de voie N°1
+		,{&i2c_port3, 0x02} // segment de voie N°2
 		,{&i2c_port4, 0x01} // segment de voie N°3 -OK
-		,{&i2c_port4, 0x02} // segment de voie N°4 -OK
+		,{&i2c_port4, 0x08} // segment de voie N°4 -OK
 		,{&i2c_port4, 0x08} // segment de voie N°5 -OK
 		,{&i2c_port5, 0x02} // segment de voie N°6 -OK
 		,{&i2c_port5, 0x01} // segment de voie N°7-OK
-		,{&i2c_port1, 0x0} // segment de voie N°8
-		,{&i2c_port2, 0x0} // segment de voie N°9
-		,{&i2c_port2, 0x0} // segment de voie N°10
+		,{&i2c_port2, 0x10} // segment de voie N°8
+		,{&i2c_port2, 0x20} // segment de voie N°9
+		,{&i2c_port3, 0x04} // segment de voie N°10
 };
 
 // Define red / green lights
@@ -748,7 +748,7 @@ void loop()
 						lcd.write(0x80);
 						lcd.print(speed & 0x7f);
 					} else {
-						loco_ptr->speed = 1;
+						loco_ptr->speed = 0;
 						lcd.go(4,3);
 						lcd.write('-');
 						lcd.print(F(" 0"));
@@ -923,16 +923,24 @@ void loop()
 
 		}
 		if (loco_detected == -1 ) break;
-		// Loco detected at address "address"
+			// Loco detected at address "address"
 		loco1.loco = new_loco(address);
 		if (loco1.loco == NULL) break;
 		// Loco controlled by POT 1
 		loco1.loco->control_by = 1;
+		loco1.loco->address = address;
 		loco1.constructeur = constructeur;
 		loco1.version = version;
+		Serial.print(F("Loco detected at address :"));
+		Serial.print(loco1.loco->address,10);
+		Serial.print('/');
+		Serial.println(loco1.constructeur,10);
+		
 		// Start normal DCC mode
+		dcc_control.begin(digital);
 		dcc_control.set_queue();
 		aiguillage[A_GARAGE].set_state(s_droit);
+		delay(100);
 
 		//switch on Garage + main track
 		digitalWrite(A3,HIGH);
@@ -950,6 +958,7 @@ void loop()
 		delay(200);
 		// Loco controlled by Radiopot1
 		while(1) {
+			Serial.write('X');
 			if (radio_ok != 0) {
 				position = Radiopot1.get();
 			} else {
@@ -963,6 +972,7 @@ void loop()
 				speed = 1;
 			}
 			loco1.loco->speed = speed;
+			Serial.println(speed,10);
 			// Are we seeing the loco on track 1 yet ?
 			if (tracks[O_V1].occupied != 0) {
 				// The guy moved the loco in the correct direction so now we know the reverse/direct direction ...
