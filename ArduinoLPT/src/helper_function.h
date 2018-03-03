@@ -117,13 +117,18 @@ void alarm_current(void) {
 	 * Current flows through a 0.22 Ohm resistor so 4.88mV / 0.22 = 22 mA
 	 * Alarm at 1.5A level = 1500/22 = 68 rounded up at 70.
 	 */
+	/* ADC step is 3.3V / 1024 (10 bit resolution) = 3.22mV / Step
+	 * Current flows through a 0.22 Ohm resistor so 3.22mV / 0.22 = 14.65 mA
+	 * Alarm at 1.5A level = 1500/14.65 = 102 rounded up at 110.
+	 */
 	uint16_t current;
 	current=alarm.get();
-	if (current > 70) {
+	if (current > 110) {
 		dcc_control.end();
 		digitalWrite(A2,LOW);
 		digitalWrite(A3,LOW);
 		current_alarm = 1;
+		buzzer_on(1000);
 	}
 }
 uint8_t radio_packet[32], radio_count,radio_id;
@@ -475,7 +480,119 @@ void follow_loco(void) {
 
 	loco_last_time = millis();
 }
+int8_t read_loco_on_prog_track(t_loco_on_track &newloco) {
+	uint8_t address,constructeur,version,speed;
+	uint16_t position;
+	// 1) Read Loco address on prog track
 
+	Serial.print(F("Reading Adress"));
+	delay(100);
+	aiguillage[A_GARAGE].set_state(s_devie);
+
+	station_mode = digital;
+	dcc_control.begin(digital);
+	dcc_control.set_direct();
+
+	// Power up Prog Track, disable main track
+	digitalWrite(A3,HIGH);
+	digitalWrite(A2,LOW);
+	lcd.menu(F("            "),
+			F(" Mettre une "),
+			F("Locomotive  "),
+			F("sur la voie "),
+			F("de garage   "),
+			F("            ")
+	);
+	delay(100);
+	int8_t loco_detected = 0;
+	while (loco_detected == 0) {
+		if (set_programmer(&dcc_control,CURRENT_SENSE) == true) {
+			// Loco detected
+			address = direct_mode_read(1);
+			constructeur = direct_mode_read(8);
+			version = direct_mode_read(7);
+			lcd.go(0,5);
+			lcd.print(F("Detected"));
+			delay(100);
+			loco_detected = 1;
+		} else {
+			lcd.go(0,5);
+			lcd.print(F("Pas de Loco"));
+			delay(100);
+		}
+		if (kbd.get_key_debounced(last) == '*') {
+			loco_detected = -1;
+		}
+
+	}
+	if (loco_detected == -1 ) return (-1);
+		// Loco detected at address "address"
+	newloco.loco = new_loco(address);
+	if (newloco.loco == NULL) return (-1);
+	// Loco controlled by POT 1
+	newloco.constructeur = constructeur;
+	newloco.version = version;
+	Serial.print(F("Loco detected at address :"));
+	Serial.print(newloco.loco->address,10);
+	Serial.print('/');
+	Serial.println(newloco.constructeur,10);
+
+	// Start normal DCC mode
+	dcc_control.begin(digital);
+	dcc_control.set_queue();
+	aiguillage[A_GARAGE].set_state(s_droit);
+	delay(100);
+
+	//switch on Garage + main track
+	digitalWrite(A3,HIGH);
+	digitalWrite(A2,HIGH);
+	lcd.menu(F("            "),
+			F(" Demarrer la"),
+			F("Locomotive  "),
+			F("vers la voie"),
+			F("principale  "),
+			F("Adr:        ")
+	);
+	buzzer_on(200);
+	lcd.go (5,5);
+	lcd.print(address, 10);
+	delay(200);
+	// Loco controlled by Radiopot1
+	while(1) {
+		Serial.write('X');
+		if (radio_ok != 0) {
+			position = Radiopot1.get();
+		} else {
+			position=512;
+		}
+		Serial.println(position);
+		if (position > 530) {
+			speed = ((position-520) >> 2) + 2 ;
+		} else if (position < 494) {
+			speed = (((500-position) >> 2) + 2) | 0x80;
+		} else {
+			speed = 1;
+		}
+		newloco.loco->speed = speed;
+		Serial.println(speed,10);
+		// Are we seeing the loco on track 1 yet ?
+		if (tracks[O_V1].occupied != 0) {
+			// The guy moved the loco in the correct direction so now we know the reverse/direct direction ...
+			newloco.reversed = speed & 0x80;
+
+		}
+		if (tracks[O_V3].occupied != 0) {
+			// Now we take over the loco
+			buzzer_on(200);
+			newloco.loco->speed = 1;
+			break; // from the while loop
+		}
+		delay (200);
+	}
+	// Turn off Prog track
+	digitalWrite(A3,LOW);
+	return 0;
+}
 void (* const todo_in_idle[])(void) PROGMEM = {
 //		&scan_col_0,
 //		&scan_col_1,

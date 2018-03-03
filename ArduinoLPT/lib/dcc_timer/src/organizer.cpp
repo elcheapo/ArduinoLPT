@@ -523,23 +523,32 @@ void search_locobuffer(message * temp) {
 		current_level ++;
 	} else {
 		// build message for loco
-		if (current_level < 3) {
+		switch (current_level) {
+		case 0:
 			build_speed_message(locobuffer[current_loco].address, locobuffer[current_loco].format,\
 					locobuffer[current_loco].speed, locobuffer[current_loco].fl, temp);
-		} else if (current_level == 3) {
+			break;
+		case 1:
 			build_function_grp1(locobuffer[current_loco].address, locobuffer[current_loco].fl<<4 | locobuffer[current_loco].f4_f1, temp);
-		} else if (current_level == 4) {
+			break;
+		case 2:
 			build_function_grp2(locobuffer[current_loco].address, locobuffer[current_loco].f4_f1, temp);
-		}else if (current_level == 5) {
+			break;
+		case 3:
 			build_function_grp3(locobuffer[current_loco].address, locobuffer[current_loco].f8_f5, temp);
-		}else if (current_level == 6) {
+			break;
+		case 4:
 			build_function_grp4(locobuffer[current_loco].address, locobuffer[current_loco].f12_f9, temp);
-		}else if (current_level == 7) {
+			break;
+		case 6:
 			build_function_grp5(locobuffer[current_loco].address, locobuffer[current_loco].f20_f13, temp);
+			break;
+		default:
+			current_level = 0;
+			break;
 		}
 		current_loco ++;
 	}
-	if (current_level >= 8)  current_level = 0;
 //	Serial3.write('|');
 }
 
