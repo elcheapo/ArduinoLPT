@@ -91,7 +91,7 @@ const t_io occupancy[] PROGMEM = {
 		{&i2c_port3, 0x01} // segment de voie N°1
 		,{&i2c_port3, 0x02} // segment de voie N°2
 		,{&i2c_port4, 0x01} // segment de voie N°3 -OK
-		,{&i2c_port4, 0x08} // segment de voie N°4 -OK
+		,{&i2c_port4, 0x02} // segment de voie N°4 -OK
 		,{&i2c_port4, 0x08} // segment de voie N°5 -OK
 		,{&i2c_port5, 0x02} // segment de voie N°6 -OK
 		,{&i2c_port5, 0x01} // segment de voie N°7-OK

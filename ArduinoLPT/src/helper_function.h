@@ -19,8 +19,8 @@ ISR(TIMER0_COMPA_vect) {
 uint32_t buzzer_stop;
 
 void buzzer_on(uint16_t ms) {
-	DDRD=(1<<DDD3);
-	PORTD|=(1<<PORTD3);
+	DDRD |=(1<<DDD3);
+	PORTD |=(1<<PORTD3);
 	buzzer_stop = millis() + ms;
 }
 void stop_buzzer(void) {
@@ -136,6 +136,7 @@ uint32_t radio_timer;
 
 void radio_get_packet_scan() {
 	if(radio_get_packet(radio_packet, radio_count, radio_id)) {
+//		Serial.write('T');
 		// We received something
 		lcd.pseudo_led(9,1);
 		radio_ok = 1;
@@ -556,12 +557,14 @@ int8_t read_loco_on_prog_track(t_loco_on_track &newloco) {
 	buzzer_on(200);
 	lcd.go (5,5);
 	lcd.print(address, 10);
-	delay(200);
+	delay(400);
 	// Loco controlled by Radiopot1
 	while(1) {
+		delay(100);
 		Serial.write('X');
 		if (radio_ok != 0) {
 			position = Radiopot1.get();
+			Serial.write('R');
 		} else {
 			position=512;
 		}
@@ -621,7 +624,7 @@ void (* const todo_in_idle[])(void) PROGMEM = {
 void yield(void) {
 	void (* current_todo_in_idle)(void);
 	if (top_level_delay != 0 ) return;
-	//	Serial.write('i');
+// Serial.write('i');
 	top_level_delay++;
 	if (which_one == NB_TASK) which_one = 0;
 	// call idle task ...*
