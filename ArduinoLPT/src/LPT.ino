@@ -879,6 +879,7 @@ void loop()
 		
 		if( read_loco_on_prog_track(loco1) == -1) {
 			Serial.print(F("Error setting loco 1"));
+			break;
 		};
 		// Loco in on track segment 3, move it to segment 7
 		aiguillage[A_GARAGE].set_state(s_devie);
@@ -922,6 +923,7 @@ void loop()
 
 		if( read_loco_on_prog_track(loco2) == -1) {
 			Serial.print(F("Error setting loco 2"));
+			break;
 		};
 
 		aiguillage[A_GARAGE].set_state(s_devie);
@@ -1152,6 +1154,7 @@ void loop()
 			}
 		}
 		break;
+
 	}
 	default:
 		break;

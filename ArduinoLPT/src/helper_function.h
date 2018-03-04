@@ -313,15 +313,15 @@ void light_control (void) {
 	}
 }
 
-sens quel_sens(t_loco_on_track * testloco) {
-	if ((testloco->loco->speed & 0x80) == testloco->reversed) {
+sens quel_sens(t_loco_on_track & testloco) {
+	if ((testloco.loco->speed & 0x80) == testloco.reversed) {
 		return antihoraire;
 	}
 	return horaire;
 }
 
 uint8_t find_next_segment(t_loco_on_track & loco, uint8_t current_segment) {
-	if (quel_sens(&loco) == horaire) {
+	if (quel_sens(loco) == horaire) {
 		switch (current_segment){
 		case O_V1:
 		case O_V2:
@@ -387,57 +387,57 @@ uint8_t is_it_loco(t_loco_on_track &loco1,uint8_t segment) {
 	uint8_t	found=0;
 	switch(segment) {
 	case O_V1: {
-		if ((loco1.track_segment == O_V3) && (quel_sens(&loco1) == horaire)) found= 1;
-		if ((loco1.track_segment == O_V10) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V3) && (quel_sens(loco1) == horaire)) found= 1;
+		if ((loco1.track_segment == O_V10) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
 		break;
 		}
 	case O_V2: {
-		if ((loco1.track_segment == O_V4) && (quel_sens(&loco1) == horaire)) found= 1;
-		if ((loco1.track_segment == O_V10) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V4) && (quel_sens(loco1) == horaire)) found= 1;
+		if ((loco1.track_segment == O_V10) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
 		break;
 		}
 	case O_V3: {
-		if ((loco1.track_segment == O_V1) && (quel_sens(&loco1) == antihoraire)) found= 1;
-		if ((loco1.track_segment == O_V5) && (quel_sens(&loco1) == horaire) && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V1) && (quel_sens(loco1) == antihoraire)) found= 1;
+		if ((loco1.track_segment == O_V5) && (quel_sens(loco1) == horaire) && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
 		break;
 		}
 	case O_V4: {
-		if ((loco1.track_segment == O_V2) && (quel_sens(&loco1) == antihoraire)) found= 1;
-		if ((loco1.track_segment == O_V5) && (quel_sens(&loco1) == horaire) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V2) && (quel_sens(loco1) == antihoraire)) found= 1;
+		if ((loco1.track_segment == O_V5) && (quel_sens(loco1) == horaire) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
 		break;
 		}
 	case O_V5: {
-		if ((loco1.track_segment == O_V7) && (quel_sens(&loco1) == horaire) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
-		if ((loco1.track_segment == O_V6) && (quel_sens(&loco1) == horaire) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
-		if ((loco1.track_segment == O_V3) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
-		if ((loco1.track_segment == O_V4) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V7) && (quel_sens(loco1) == horaire) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V6) && (quel_sens(loco1) == horaire) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V3) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V4) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
 		break;
 		}
 	case O_V6: {
-		if ((loco1.track_segment == O_V8) && (quel_sens(&loco1) == horaire)) found= 1;
-		if ((loco1.track_segment == O_V5) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V8) && (quel_sens(loco1) == horaire)) found= 1;
+		if ((loco1.track_segment == O_V5) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
 		break;
 		}
 	case O_V7: {
-		if ((loco1.track_segment == O_V9) && (quel_sens(&loco1) == horaire)) found= 1;
-		if ((loco1.track_segment == O_V5) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V9) && (quel_sens(loco1) == horaire)) found= 1;
+		if ((loco1.track_segment == O_V5) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
 		break;
 		}
 	case O_V8: {
-		if ((loco1.track_segment == O_V6) && (quel_sens(&loco1) == antihoraire)) found= 1;
-		if ((loco1.track_segment == O_V10) && (quel_sens(&loco1) == horaire) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V6) && (quel_sens(loco1) == antihoraire)) found= 1;
+		if ((loco1.track_segment == O_V10) && (quel_sens(loco1) == horaire) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
 		break;
 		}
 	case O_V9: {
-		if ((loco1.track_segment == O_V7) && (quel_sens(&loco1) == antihoraire)) found= 1;
-		if ((loco1.track_segment == O_V10) && (quel_sens(&loco1) == horaire) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V7) && (quel_sens(loco1) == antihoraire)) found= 1;
+		if ((loco1.track_segment == O_V10) && (quel_sens(loco1) == horaire) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
 		break;
 		}
 	case O_V10: {
-		if ((loco1.track_segment == O_V2) && (quel_sens(&loco1) == horaire) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
-		if ((loco1.track_segment == O_V1) && (quel_sens(&loco1) == horaire) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
-		if ((loco1.track_segment == O_V9) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
-		if ((loco1.track_segment == O_V8) && (quel_sens(&loco1) == antihoraire) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V2) && (quel_sens(loco1) == horaire) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V1) && (quel_sens(loco1) == horaire) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
+		if ((loco1.track_segment == O_V9) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V8) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
 		break;
 		}
 	default:
@@ -466,6 +466,7 @@ void follow_loco(void) {
 			}
 		}
 	}
+#if 0
 	// Also make sure the locos are still where they should be ...
 	if (tracks[loco1.track_segment].occupied == 0) {
 		// We lost loco1 ???
@@ -473,16 +474,17 @@ void follow_loco(void) {
 		Serial.println(F("Lost LOCO1"));
 	}
 	if (tracks[loco2.track_segment].occupied == 0) {
-		// We lost loco21 ???
+		// We lost loco2 ???
 		buzzer_on(50);
 		Serial.println(F("Lost LOCO2"));
 	}
+#endif
 
 
 	loco_last_time = millis();
 }
 int8_t read_loco_on_prog_track(t_loco_on_track &newloco) {
-	uint8_t address,constructeur,version,speed;
+	uint8_t address,constructeur,version,speed,key;
 	uint16_t position;
 	// 1) Read Loco address on prog track
 
@@ -502,9 +504,14 @@ int8_t read_loco_on_prog_track(t_loco_on_track &newloco) {
 			F("Locomotive  "),
 			F("sur la voie "),
 			F("de garage   "),
-			F("            ")
+			F("pret : D    ")
 	);
-	delay(100);
+	do {
+		key = kbd.get_key_debounced(last);
+		delay(200);
+	} while (key == 0);
+	if (key == '*') return -1;
+
 	int8_t loco_detected = 0;
 	while (loco_detected == 0) {
 		if (set_programmer(&dcc_control,CURRENT_SENSE) == true) {
