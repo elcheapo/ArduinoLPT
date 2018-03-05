@@ -970,10 +970,14 @@ void loop()
 					loco1.loco->speed = 1;
 					break;
 				case slow_down:
-					if (loco1.reversed  == 0) {
-						loco1.loco->speed = 0x80 + 30;
+					if ((loco1.loco->speed & 0x7f) > 30) {
+						if (loco1.reversed  == 0) {
+							loco1.loco->speed = 0x80 + 30;
+						} else {
+							loco1.loco->speed = 30;
+						}
 					} else {
-						loco1.loco->speed = 30;
+						loco1.loco->speed = 1;
 					}
 					break;
 				case ok_to_run:
@@ -986,7 +990,7 @@ void loop()
 							loco1.loco->speed = speed;
 						}
 					} else {
-						speed = 1;
+						loco1.loco->speed = 1;
 					}
 
 
@@ -1012,7 +1016,7 @@ void loop()
 				lcd.go(0,3);
 				lcd.print(loco_ptr->address);
 				if (radio_ok != 0) {
-					position = Radiopot1.get();
+					position = Radiopot2.get();
 				} else {
 					position=512;
 				}
@@ -1022,10 +1026,14 @@ void loop()
 					loco2.loco->speed = 1;
 					break;
 				case slow_down:
-					if (loco2.reversed  == 0) {
-						loco2.loco->speed = 0x80 + 30;
+					if ((loco2.loco->speed & 0x7f) > 30) {
+						if (loco2.reversed  == 0) {
+							loco2.loco->speed = 0x80 + 30;
+						} else {
+							loco2.loco->speed = 30;
+						}
 					} else {
-						loco2.loco->speed = 30;
+						loco2.loco->speed = 1;
 					}
 					break;
 				case ok_to_run:
@@ -1038,7 +1046,7 @@ void loop()
 							loco2.loco->speed = speed;
 						}
 					} else {
-						speed = 1;
+						loco2.loco->speed = 1;
 					}
 
 
