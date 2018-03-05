@@ -48,11 +48,16 @@ typedef struct {
 typedef struct {
 	uint8_t dcc_address;
 	uint8_t track_segment;
+	uint8_t next_track_segment;
 	locomem * loco;
 	uint8_t reversed;
 	uint8_t constructeur;
 	uint8_t version;
+	uint32_t stop_time;
+	aiguille * to_unlock;
 } t_loco_on_track;
+
+typedef enum {ok_to_run, slow_down, stop_now} t_control;
 
 typedef enum {horaire,antihoraire} sens;
 
@@ -185,7 +190,7 @@ Potar Radiopot1, Radiopot2;
 uint8_t radio_ok;
 
 t_loco_on_track loco1, loco2;
-uint8_t enable_follow_loco;
+uint8_t enable_follow_loco,function_loco;
 
 
 //Potar pot2(0);
@@ -225,6 +230,7 @@ void setup() {
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
 	radio_ok = 0;
 	enable_follow_loco = 0;
+	function_loco = 1;
 	loco_last_time = 0;
 	scan_time = 0;
 	Serial.begin(115200);
@@ -641,6 +647,7 @@ void loop()
 			uint8_t key,speed;
 			locomem * loco_ptr;
 
+
 			// Now update the display
 			delay(200);
 			if (current_alarm != 0) {
@@ -665,66 +672,18 @@ void loop()
 				);
 				key = kbd.get_key_debounced(last);
 				if (key == '*') break;
-				loco_ptr = find_control(1);
-				// control function for loco 1
-				switch (key) {
-#if 0
-				case 'A':
-					aiguillage.set_state(s_droit);
-					break;
-				case 'B':
-					aiguillage.set_state(s_devie);
-					break;
-#endif
-					// Key 0 to 9 : functions 0 to 9
-				case '0' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->fl ^= 0x01; // fct 0
-					break;
-				}
-				case '1' : {
-					if (loco_ptr==NULL) break; // fct 1
-					loco_ptr->f4_f1 ^= 0x01;
-					break;
-				}
-				case '2' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f4_f1 ^= 0x02; //fct 2
-					break;
-				}
-				case '3' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f4_f1 ^= 0x04; // fct 3
-					break;
-				}
-				case '4' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f4_f1 ^= 0x08; // fct 4
-					break;
-				}
-				case '5' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f8_f5 ^= 0x01; // fct 5
-					break;
-				}
-				case '6' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f8_f5 ^= 0x02; break; // fct 6
-				}
-				case '7' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f8_f5 ^= 0x04; break; // fct 7
-				}
-				case '8' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f8_f5 ^= 0x08; break; // fct 8
-				}
-				case '9' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f12_f9 ^= 0x01; break; // fct 9
-				}
 
+				lcd.go(10,1);
+				if ( function_loco == 1) { // by default, numeric keys control functions on loco 1
+					loco_ptr = loco1.loco;
+					lcd.write('1');
+				} else {
+					loco_ptr = loco2.loco;
+					lcd.write('2');
 				}
+				process_function(loco_ptr,key);
+
+				loco_ptr = find_control(1);
 				// Loco controled by Radiopot1
 				if (loco_ptr != NULL) {
 					lcd.go(0,3);
@@ -783,34 +742,6 @@ void loop()
 						lcd.print(F(" 0"));
 					}
 				}
-#if 0
-
-				// Loco controled by pot3
-				loco_ptr = find_control(3);
-				if (loco_ptr != NULL) {
-					lcd.go(0,5);
-					lcd.print(loco_ptr->address);
-					position = pot3.get();
-					if (position > 530) {
-						speed = (position-520) >> 2;
-						loco_ptr->speed = speed;
-						lcd.go(4,5);
-						lcd.write(0x81);
-						lcd.print(speed);
-					} else if (position < 490) {
-						speed = ((500-position) >> 2) | 0x80;
-						loco_ptr->speed = speed;
-						lcd.go(4,5);
-						lcd.write(0x80);
-						lcd.print(speed & 0x7f);
-					} else {
-						loco_ptr->speed = 1;
-						lcd.go(4,5);
-						lcd.write('-');
-						lcd.print(F(" 0"));
-					}
-				}
-#endif
 				lcd.go(0,5);
 				for (uint8_t i = 0; i < MAX_TRACKS; i++) {
 					if (tracks[i].occupied != 0) {
@@ -900,10 +831,10 @@ void loop()
 		// Now wait until we see the loco in O_V7
 		while (tracks[O_V10].occupied == 0)
 			delay(100);
-		buzzer_on(100);
+		buzzer_on(50);
 		while (tracks[O_V9].occupied == 0)
 			delay(100);
-		buzzer_on(100);
+		buzzer_on(50);
 		while (tracks[O_V7].occupied == 0)
 			delay(100);
 		lcd.menu(F("            "),
@@ -915,7 +846,9 @@ void loop()
 		);
 		delay(2000);
 		loco1.loco->speed = 1;
-		buzzer_on(200);
+		buzzer_on(50);
+		delay(200);
+		buzzer_on(50);
 		/********************************************************************/
 		// No do the second loco
 		/********************************************************************/
@@ -944,10 +877,10 @@ void loop()
 		// Now wait until we see the loco in O_V6
 		while (tracks[O_V10].occupied == 0)
 			delay(100);
-		buzzer_on(100);
+		buzzer_on(50);
 		while (tracks[O_V8].occupied == 0)
 			delay(100);
-		buzzer_on(100);
+		buzzer_on(50);
 		while (tracks[O_V6].occupied == 0)
 			delay(100);
 		lcd.menu(F("            "),
@@ -959,14 +892,15 @@ void loop()
 		);
 		delay(2000);
 		loco2.loco->speed = 1;
-		buzzer_on(200);
+		buzzer_on(50);
+		delay(200);
+		buzzer_on(50);
 
 
 		/**************************************************************************************************************/
-//		loco1.loco->control_by = 1;
-//		loco2.loco->control_by = 2;
-		loco1.track_segment = 7;
-		loco2.track_segment = 6;
+
+		loco1.track_segment = O_V7;
+		loco2.track_segment = O_V6;
 		enable_follow_loco = 1;
 // Now we are ready to run ... the loco should never bump into each other ...
 
@@ -1000,7 +934,7 @@ void loop()
 				}
 			} else {
 				lcd.menu(F("            "),
-						F(" DIGITAL    "),
+						F(" DEMO       "),
 						F("Adr:Vite:seg"),
 						F("   :    :   "),
 						F("   :    :   "),
@@ -1008,138 +942,119 @@ void loop()
 				);
 				key = kbd.get_key_debounced(last);
 				if (key == '*') break;
-//				loco_ptr = find_control(1);
-				loco_ptr = loco1.loco;
-				// control function for loco 1
-				switch (key) {
-					// Key 0 to 9 : functions 0 to 9
-				case '0' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->fl ^= 0x01; // fct 0
-					break;
+
+				lcd.go(10,1);
+				if ( function_loco == 1) { // by default, numeric keys control functions on loco 1
+					loco_ptr = loco1.loco;
+					lcd.write('1');
+				} else {
+					loco_ptr = loco2.loco;
+					lcd.write('2');
 				}
-				case '1' : {
-					if (loco_ptr==NULL) break; // fct 1
-					loco_ptr->f4_f1 ^= 0x01;
-					break;
-				}
-				case '2' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f4_f1 ^= 0x02; //fct 2
-					break;
-				}
-				case '3' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f4_f1 ^= 0x04; // fct 3
-					break;
-				}
-				case '4' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f4_f1 ^= 0x08; // fct 4
-					break;
-				}
-				case '5' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f8_f5 ^= 0x01; // fct 5
-					break;
-				}
-				case '6' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f8_f5 ^= 0x02; break; // fct 6
-				}
-				case '7' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f8_f5 ^= 0x04; break; // fct 7
-				}
-				case '8' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f8_f5 ^= 0x08; break; // fct 8
-				}
-				case '9' : {
-					if (loco_ptr==NULL) break;
-					loco_ptr->f12_f9 ^= 0x01; break; // fct 9
-				}
-				case 'A' : {
-					aiguillage[A_NW].set_state(s_droit);
-					aiguillage[A_NE].set_state(s_droit);
-				}
-				case 'B' : {
-					aiguillage[A_NW].set_state(s_devie);
-					aiguillage[A_NE].set_state(s_devie);
-				}
-				case 'C' : {
-					aiguillage[A_SW].set_state(s_devie);
-					aiguillage[A_SE].set_state(s_devie);
-				}
-				case 'D' : {
-					aiguillage[A_SW].set_state(s_droit);
-					aiguillage[A_SE].set_state(s_droit);
-				}
-				default:
-					break;
-				}
+				process_function(loco_ptr,key);
+
+
+				// Now control the locos
+
 				// Loco controled by Radiopot1
-				if (loco_ptr != NULL) {
-					lcd.go(0,3);
-					lcd.print(loco_ptr->address);
-					if (radio_ok != 0) {
-						position = Radiopot1.get();
+				lcd.go(0,3);
+				lcd.print(loco_ptr->address);
+				if (radio_ok != 0) {
+					position = Radiopot1.get();
+				} else {
+					position=512;
+				}
+				// Can we let the guy drive ?
+				switch (control_loco(loco1)) {
+				case stop_now:
+					loco1.loco->speed = 1;
+					break;
+				case slow_down:
+					if (loco1.reversed  == 0) {
+						loco1.loco->speed = 0x80 + 30;
 					} else {
-						position=512;
+						loco1.loco->speed = 30;
 					}
+					break;
+				case ok_to_run:
+					// Only allow clockwise ...
 					if (position > 530) {
 						speed = ((position-520) >> 2) + 2 ;
-						loco_ptr->speed = speed;
-						lcd.go(3,3);
-						lcd.write(0x81);
-						lcd.print(speed);
-					} else if (position < 494) {
-						speed = (((500-position) >> 2) + 2) | 0x80;
-						loco_ptr->speed = speed;
-						lcd.go(3,3);
-						lcd.write(0x80);
-						lcd.print(speed & 0x7f);
+						if (loco1.reversed  == 0) {
+							loco1.loco->speed = 0x80 + speed;
+						} else {
+							loco1.loco->speed = speed;
+						}
 					} else {
-						loco_ptr->speed = 1;
-						lcd.go(3,3);
-						lcd.write('-');
-						lcd.print(F(" 0"));
+						speed = 1;
 					}
-					loco_ptr->speed = speed;
-					lcd.go(9,3);
-					lcd.print(loco1.track_segment,10);
+
+
 				}
+				lcd.go(0,3);
+				lcd.print(loco1.loco->address);
+				lcd.go(3,3);
+				if (speed != 1) {
+					lcd.write(0x81);
+					lcd.print(speed & 0x7f);
+				} else {
+					lcd.write('-');
+					lcd.print(F(" 0"));
+				}
+				lcd.go(8,3);
+				lcd.write(0x7c);
+				lcd.print(loco1.track_segment,10);
+
+
+
 				// Loco controled by pot2
-//				loco_ptr = find_control(2);
-				loco_ptr = loco2.loco;
-				if (loco_ptr != NULL) {
-					lcd.go(0,4);
-					lcd.print(loco_ptr->address);
-					if (radio_ok != 0) {
-						position = Radiopot2.get();
-					} else {
-						position=512;
-					}
-					if (position > 530) {
-						speed = ((position-520) >> 2) + 2;
-						loco_ptr->speed = speed;
-						lcd.go(3,4);
-						lcd.write(0x81);
-						lcd.print(speed);
-					} else if (position < 494) {
-						speed = (((500-position) >> 2) + 2) | 0x80;
-						loco_ptr->speed = speed;
-						lcd.go(3,4);
-						lcd.write(0x80);
-						lcd.print(speed & 0x7f);
-					} else {
-						loco_ptr->speed = 1;
-						lcd.go(3,4);
-						lcd.write('-');
-						lcd.print(F(" 0"));
-					}
+
+				lcd.go(0,3);
+				lcd.print(loco_ptr->address);
+				if (radio_ok != 0) {
+					position = Radiopot1.get();
+				} else {
+					position=512;
 				}
-				lcd.go(9,4);
+				// Can we let the guy drive ?
+				switch (control_loco(loco2)) {
+				case stop_now:
+					loco2.loco->speed = 1;
+					break;
+				case slow_down:
+					if (loco2.reversed  == 0) {
+						loco2.loco->speed = 0x80 + 30;
+					} else {
+						loco2.loco->speed = 30;
+					}
+					break;
+				case ok_to_run:
+					// Only allow clockwise ...
+					if (position > 530) {
+						speed = ((position-520) >> 2) + 2 ;
+						if (loco2.reversed  == 0) {
+							loco2.loco->speed = 0x80 + speed;
+						} else {
+							loco2.loco->speed = speed;
+						}
+					} else {
+						speed = 1;
+					}
+
+
+				}
+				lcd.go(0,4);
+				lcd.print(loco2.loco->address);
+				lcd.go(3,4);
+				if (speed != 1) {
+					lcd.write(0x81);
+					lcd.print(speed & 0x7f);
+				} else {
+					lcd.write('-');
+					lcd.print(F(" 0"));
+				}
+				lcd.go(8,4);
+				lcd.write(0x7c);
 				lcd.print(loco2.track_segment,10);
 
 				lcd.go(0,5);
