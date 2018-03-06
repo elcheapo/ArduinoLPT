@@ -54,6 +54,7 @@ typedef struct {
 	uint8_t constructeur;
 	uint8_t version;
 	uint32_t stop_time;
+	uint32_t unlock_time;
 	aiguille * to_unlock;
 } t_loco_on_track;
 
@@ -896,7 +897,26 @@ void loop()
 		delay(200);
 		buzzer_on(50);
 
+		lcd.menu(F("            "),
+				F(" Mettre les "),
+				F(" commandes  "),
+				F(" en position"),
+				F("  medianes  "),
+				F("            ")
+				);
 
+		uint8_t done = 0;
+		while (done == 0) {
+			uint16_t value;
+			delay(200);
+			value = Radiopot1.get();
+			if (( value > 480 ) && ( value < 520)) {
+				value = Radiopot2.get();
+				if (( value > 480 ) && ( value < 520)) {
+					done = 1;
+				}
+			}
+		}
 		/**************************************************************************************************************/
 
 		loco1.track_segment = O_V7;
@@ -961,24 +981,39 @@ void loop()
 				lcd.print(loco_ptr->address);
 				if (radio_ok != 0) {
 					position = Radiopot1.get();
-				} else {
+				} else { // No Radio - just stop
 					position=512;
+					loco1.loco->speed = 0;
 				}
 				// Can we let the guy drive ?
 				switch (control_loco(loco1)) {
+				uint8_t temp_speed;
 				case stop_now:
 					loco1.loco->speed = 1;
 					break;
 				case slow_down:
-					if ((loco1.loco->speed & 0x7f) > 30) {
-						if (loco1.reversed  == 0) {
-							loco1.loco->speed = 0x80 + 30;
-						} else {
-							loco1.loco->speed = 30;
-						}
-					} else {
-						loco1.loco->speed = 1;
+					temp_speed = loco1.loco->speed & 0x7f;
+					switch (temp_speed) {
+					case 31 ... 127: {
+						temp_speed = 30;
+						break;
 					}
+					case 10 ... 30: {
+						temp_speed = temp_speed /2;
+						break;
+					}
+					case 0 ... 9:
+					default: {
+						temp_speed = 1;
+						break;
+					}
+					}
+					if (loco1.reversed  == 0) {
+						loco1.loco->speed = 0x80 + temp_speed;
+					} else {
+						loco1.loco->speed = temp_speed;
+					}
+
 					break;
 				case ok_to_run:
 					// Only allow clockwise ...
@@ -1019,22 +1054,37 @@ void loop()
 					position = Radiopot2.get();
 				} else {
 					position=512;
+					loco2.loco->speed = 0;
 				}
 				// Can we let the guy drive ?
 				switch (control_loco(loco2)) {
+				uint8_t temp_speed;
 				case stop_now:
 					loco2.loco->speed = 1;
 					break;
 				case slow_down:
-					if ((loco2.loco->speed & 0x7f) > 30) {
-						if (loco2.reversed  == 0) {
-							loco2.loco->speed = 0x80 + 30;
-						} else {
-							loco2.loco->speed = 30;
-						}
-					} else {
-						loco2.loco->speed = 1;
+					temp_speed = loco2.loco->speed & 0x7f;
+					switch (temp_speed) {
+					case 31 ... 127: {
+						temp_speed = 30;
+						break;
 					}
+					case 10 ... 30: {
+						temp_speed = temp_speed /2;
+						break;
+					}
+					case 0 ... 9:
+					default: {
+						temp_speed = 1;
+						break;
+					}
+					}
+					if (loco2.reversed  == 0) {
+						loco2.loco->speed = 0x80 + temp_speed;
+					} else {
+						loco2.loco->speed = temp_speed;
+					}
+
 					break;
 				case ok_to_run:
 					// Only allow clockwise ...
