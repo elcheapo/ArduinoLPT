@@ -319,7 +319,7 @@ sens quel_sens(t_loco_on_track & testloco) {
 	}
 	return horaire;
 }
-
+#if 0
 uint8_t find_next_segment(t_loco_on_track & loco, uint8_t current_segment) {
 	if (quel_sens(loco) == horaire) {
 		switch (current_segment){
@@ -382,7 +382,7 @@ uint8_t find_next_segment(t_loco_on_track & loco, uint8_t current_segment) {
 	}
 	return (0xFF);
 }
-
+#endif
 uint8_t is_it_loco(t_loco_on_track &loco1,uint8_t segment) {
 	uint8_t	found=0;
 	switch(segment) {
@@ -502,6 +502,23 @@ void follow_loco(void) {
 		if (tracks[i].timestamp > loco_last_time) {
 			// something has been detected on this track segment since last time we checked
 			// Is it loco1 ? loco1 was last seen in loco1.track_segment
+			// Simplify scheme, just look at the loco structure, the loco knows where it is going. and we only set the next_track_segment once we know we can go on it
+			if (loco1.next_track_segment == i ) {
+				loco1.track_segment = i;
+				Serial.print(F("Loco1 on V"));
+				Serial.println(i+1,10);
+			// or loco2 ?
+			} else if (loco2.next_track_segment == i ) {
+				loco2.track_segment = i;
+				Serial.print(F("Loco2 on V"));
+				Serial.println(i+1,10);
+			} else {
+//				buzzer_on(50); // something weird happened ...
+				Serial.print(F("UFO: "));
+				Serial.println(i+1,10);
+			}
+
+#if 0
 			if (is_it_loco(loco1,i) != 0 ) {
 				loco1.track_segment = i;
 				Serial.print(F("Loco1 on V"));
@@ -516,6 +533,7 @@ void follow_loco(void) {
 				Serial.print(F("UFO: "));
 				Serial.println(i+1,10);
 			}
+#endif
 		}
 	}
 #if 0
@@ -738,6 +756,7 @@ void process_function (locomem * loco_ptr, uint8_t key) {
 }
 
 t_control control_loco(t_loco_on_track &loco) {
+	uint8_t tentative_track_segment = 0;
 	// Only clockwise for now ...
 	// Do we need to stop ?
 	if ((loco.stop_time != 0) && (millis() > loco.stop_time)) {
@@ -745,6 +764,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		return stop_now;
 	}
 	// can we unlock the point - 5 seconds after we enter the track segment (next loco cannot enter because segment is busy)
+	// We may do this multiple times while the loco is waiting but loco.loco_to_unlock is NULL the second time
 	if ( (loco.unlock_time != 0 ) && (millis() > loco.unlock_time ) ) {
 		if (loco.to_unlock != NULL) {
 			loco.to_unlock->unlock();
@@ -761,43 +781,43 @@ t_control control_loco(t_loco_on_track &loco) {
 		switch (loco.track_segment) {
 		case O_V1:
 		case O_V2:
-			loco.next_track_segment = O_V10;
+			tentative_track_segment = O_V10;
 			break;
 		case O_V3:
-			loco.next_track_segment = O_V1;
+			tentative_track_segment = O_V1;
 			break;
 		case O_V4:
-			loco.next_track_segment = O_V2;
+			tentative_track_segment = O_V2;
 			break;
 		case O_V5:
 			if ((tracks[O_V4].occupied == 0) && (tracks[O_V3].occupied == 0)) {
-				loco.next_track_segment = O_V4;
+				tentative_track_segment = O_V4;
 			} else { // OV_3/OV_1 should be free ...
-				loco.next_track_segment = O_V3;
+				tentative_track_segment = O_V3;
 			}
 			break;
 		case O_V6:
 		case O_V7:
-			loco.next_track_segment = O_V5;
+			tentative_track_segment = O_V5;
 			break;
 		case O_V8:
-			loco.next_track_segment = O_V6;
+			tentative_track_segment = O_V6;
 			break;
 		case O_V9:
-			loco.next_track_segment = O_V7;
+			tentative_track_segment = O_V7;
 			break;
 		case O_V10:
 			if ((tracks[O_V9].occupied == 0) && (tracks[O_V7].occupied == 0)) {
-				loco.next_track_segment = O_V9;
+				tentative_track_segment = O_V9;
 			} else { // OV_8/OV_6 should be free ...
-				loco.next_track_segment = O_V8;
+				tentative_track_segment = O_V8;
 			}
 			break;
 		}
 	}
 	// Now can go onto the next track segment without problem ?
 	// Is it free ?
-	if (tracks[loco.next_track_segment].occupied != 0) {
+	if (tracks[tentative_track_segment].occupied != 0) {
 		// There is somebody there, stop in 3 seconds
 		loco.stop_time = millis() + 3000;
 		Serial.write('B');
@@ -814,7 +834,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		// No problem in this case ...
 		break;
 	case O_V10: {
-		if (loco.next_track_segment == O_V9) {
+		if (tentative_track_segment == O_V9) {
 			if (!aiguillage[A_NW].set_state_and_lock(s_droit) ) {
 				// We have set and locked the point, take a note to unlock it ...
 				loco.to_unlock = &aiguillage[A_NW];
@@ -836,7 +856,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		break;
 	}
 	case O_V5: {
-		if (loco.next_track_segment == O_V4) {
+		if (tentative_track_segment == O_V4) {
 			if (!aiguillage[A_SE].set_state_and_lock(s_droit) ) {
 				// We have set and locked the point, take a note to unlock it ...
 				loco.to_unlock = &aiguillage[A_SE];
@@ -903,6 +923,8 @@ t_control control_loco(t_loco_on_track &loco) {
 	}
 
 	}
+	// Now we are sure we can go to the next segment
+	loco.next_track_segment = tentative_track_segment;
 	return ok_to_run;
 }
 
