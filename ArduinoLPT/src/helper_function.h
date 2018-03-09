@@ -773,7 +773,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		}
 	}
 
-	// Did we get onto the "next track segment" ?
+	// Did we get onto the "next track segment" and were we successful last time we tried  ?
 	if (loco.track_segment == loco.next_track_segment) {
 		// Now we can unlock the point in 5 sec.
 		loco.unlock_time = millis()+5000;
@@ -814,117 +814,117 @@ t_control control_loco(t_loco_on_track &loco) {
 			}
 			break;
 		}
-	}
-	// Now can go onto the next track segment without problem ?
-	// Is it free ?
-	if (tracks[tentative_track_segment].occupied != 0) {
-		// There is somebody there, stop in 3 seconds
-		loco.stop_time = millis() + 3000;
-		Serial.write('B');
-		return slow_down;
-	} else {
-		loco.stop_time = 0;
-	}
-	// Do we need to set a point ? Is it not locked ?
-	switch (loco.track_segment) {
-	case O_V9:
-	case O_V8:
-	case O_V3:
-	case O_V4:
-		// No problem in this case ...
-		break;
-	case O_V10: {
-		if (tentative_track_segment == O_V9) {
-			if (!aiguillage[A_NW].set_state_and_lock(s_droit) ) {
+		// Now can go onto the next track segment without problem ?
+		// Is it free ?
+		if (tracks[tentative_track_segment].occupied != 0) {
+			// There is somebody there, stop in 3 seconds
+			loco.stop_time = millis() + 3000;
+			Serial.write('B');
+			return slow_down;
+		} else {
+			loco.stop_time = 0;
+		}
+		// Do we need to set a point ? Is it not locked ?
+		switch (loco.track_segment) {
+		case O_V9:
+		case O_V8:
+		case O_V3:
+		case O_V4:
+			// No problem in this case ...
+			break;
+		case O_V10: {
+			if (tentative_track_segment == O_V9) {
+				if (!aiguillage[A_NW].set_state_and_lock(s_droit) ) {
+					// We have set and locked the point, take a note to unlock it ...
+					loco.to_unlock = &aiguillage[A_NW];
+				} else {
+					// can't set the point for now - just stop in 3 sec
+					loco.stop_time = millis() + 3000;
+					return slow_down;
+				}
+			} else {
+				if (!aiguillage[A_NW].set_state_and_lock(s_devie) ) {
+					// We have set and locked the point, take a note to unlock it ...
+					loco.to_unlock = &aiguillage[A_NW];
+				} else {
+					// can't set the point for now - just stop in 3 sec
+					loco.stop_time = millis() + 3000;
+					return slow_down;
+				}
+			}
+			break;
+		}
+		case O_V5: {
+			if (tentative_track_segment == O_V4) {
+				if (!aiguillage[A_SE].set_state_and_lock(s_droit) ) {
+					// We have set and locked the point, take a note to unlock it ...
+					loco.to_unlock = &aiguillage[A_SE];
+				} else {
+					// can't set the point for now - just stop in 3 sec
+					loco.stop_time = millis() + 3000;
+					return slow_down;
+				}
+			} else {
+				if (!aiguillage[A_SE].set_state_and_lock(s_devie) ) {
+					// We have set and locked the point, take a note to unlock it ...
+					loco.to_unlock = &aiguillage[A_SE];
+				} else {
+					// can't set the point for now - just stop in 3 sec
+					loco.stop_time = millis() + 3000;
+					return slow_down;
+				}
+			}
+			break;
+		case O_V6: {
+			if (!aiguillage[A_NE].set_state_and_lock(s_devie) ) {
 				// We have set and locked the point, take a note to unlock it ...
-				loco.to_unlock = &aiguillage[A_NW];
+				loco.to_unlock = &aiguillage[A_NE];
 			} else {
 				// can't set the point for now - just stop in 3 sec
 				loco.stop_time = millis() + 3000;
 				return slow_down;
 			}
-		} else {
-			if (!aiguillage[A_NW].set_state_and_lock(s_devie) ) {
+			break;
+		}
+		case O_V7: {
+			if (!aiguillage[A_NE].set_state_and_lock(s_droit) ) {
 				// We have set and locked the point, take a note to unlock it ...
-				loco.to_unlock = &aiguillage[A_NW];
+				loco.to_unlock = &aiguillage[A_NE];
 			} else {
 				// can't set the point for now - just stop in 3 sec
 				loco.stop_time = millis() + 3000;
 				return slow_down;
 			}
+			break;
 		}
-		break;
-	}
-	case O_V5: {
-		if (tentative_track_segment == O_V4) {
-			if (!aiguillage[A_SE].set_state_and_lock(s_droit) ) {
+		case O_V1: {
+			if (!aiguillage[A_SW].set_state_and_lock(s_devie) ) {
 				// We have set and locked the point, take a note to unlock it ...
-				loco.to_unlock = &aiguillage[A_SE];
+				loco.to_unlock = &aiguillage[A_SW];
 			} else {
 				// can't set the point for now - just stop in 3 sec
 				loco.stop_time = millis() + 3000;
 				return slow_down;
 			}
-		} else {
-			if (!aiguillage[A_SE].set_state_and_lock(s_devie) ) {
+			break;
+		}
+		case O_V2: {
+			if (!aiguillage[A_SW].set_state_and_lock(s_droit) ) {
 				// We have set and locked the point, take a note to unlock it ...
-				loco.to_unlock = &aiguillage[A_SE];
+				loco.to_unlock = &aiguillage[A_SW];
 			} else {
 				// can't set the point for now - just stop in 3 sec
 				loco.stop_time = millis() + 3000;
 				return slow_down;
 			}
+			break;
 		}
-		break;
-	case O_V6: {
-		if (!aiguillage[A_NE].set_state_and_lock(s_devie) ) {
-			// We have set and locked the point, take a note to unlock it ...
-			loco.to_unlock = &aiguillage[A_NE];
-		} else {
-			// can't set the point for now - just stop in 3 sec
-			loco.stop_time = millis() + 3000;
-			return slow_down;
 		}
-		break;
-	}
-	case O_V7: {
-		if (!aiguillage[A_NE].set_state_and_lock(s_droit) ) {
-			// We have set and locked the point, take a note to unlock it ...
-			loco.to_unlock = &aiguillage[A_NE];
-		} else {
-			// can't set the point for now - just stop in 3 sec
-			loco.stop_time = millis() + 3000;
-			return slow_down;
-		}
-		break;
-	}
-	case O_V1: {
-		if (!aiguillage[A_SW].set_state_and_lock(s_devie) ) {
-			// We have set and locked the point, take a note to unlock it ...
-			loco.to_unlock = &aiguillage[A_SW];
-		} else {
-			// can't set the point for now - just stop in 3 sec
-			loco.stop_time = millis() + 3000;
-			return slow_down;
-		}
-		break;
-	}
-	case O_V2: {
-		if (!aiguillage[A_SW].set_state_and_lock(s_droit) ) {
-			// We have set and locked the point, take a note to unlock it ...
-			loco.to_unlock = &aiguillage[A_SW];
-		} else {
-			// can't set the point for now - just stop in 3 sec
-			loco.stop_time = millis() + 3000;
-			return slow_down;
-		}
-		break;
-	}
-	}
 
+		}
+		// Now we are sure we can go to the next segment
+		loco.next_track_segment = tentative_track_segment;
 	}
-	// Now we are sure we can go to the next segment
-	loco.next_track_segment = tentative_track_segment;
 	return ok_to_run;
 }
 

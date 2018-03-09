@@ -1046,8 +1046,9 @@ void loop()
 				}
 				lcd.go(8,3);
 				lcd.write(0x7c);
-				lcd.print(loco1.track_segment+1,10);
-
+				lcd.print(loco1.track_segment+1,16);
+				lcd.write(0x7c);
+				lcd.print(loco1.next_track_segment+1,16);
 
 
 				// Loco controled by pot2
