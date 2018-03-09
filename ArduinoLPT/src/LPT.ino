@@ -920,7 +920,10 @@ void loop()
 		/**************************************************************************************************************/
 
 		loco1.track_segment = O_V7;
+		loco1.next_track_segment = O_V5;
 		loco2.track_segment = O_V6;
+		loco2.next_track_segment = O_V5;
+		loco_last_time=millis();
 		enable_follow_loco = 1;
 // Now we are ready to run ... the loco should never bump into each other ...
 
@@ -990,6 +993,7 @@ void loop()
 				uint8_t temp_speed;
 				case stop_now:
 					loco1.loco->speed = 1;
+					Serial.println(F("L1S"));
 					break;
 				case slow_down:
 					temp_speed = loco1.loco->speed & 0x7f;
@@ -1013,7 +1017,7 @@ void loop()
 					} else {
 						loco1.loco->speed = temp_speed;
 					}
-
+					Serial.println(F("L1s"));
 					break;
 				case ok_to_run:
 					// Only allow clockwise ...
@@ -1027,8 +1031,8 @@ void loop()
 					} else {
 						loco1.loco->speed = 1;
 					}
-
-
+	//				Serial.println(F("L1R"));
+					break;
 				}
 				lcd.go(0,3);
 				lcd.print(loco1.loco->address);
@@ -1042,7 +1046,7 @@ void loop()
 				}
 				lcd.go(8,3);
 				lcd.write(0x7c);
-				lcd.print(loco1.track_segment,10);
+				lcd.print(loco1.track_segment+1,10);
 
 
 
@@ -1061,6 +1065,7 @@ void loop()
 				uint8_t temp_speed;
 				case stop_now:
 					loco2.loco->speed = 1;
+					Serial.println(F("L2S"));
 					break;
 				case slow_down:
 					temp_speed = loco2.loco->speed & 0x7f;
@@ -1084,7 +1089,7 @@ void loop()
 					} else {
 						loco2.loco->speed = temp_speed;
 					}
-
+					Serial.println(F("L2s"));
 					break;
 				case ok_to_run:
 					// Only allow clockwise ...
@@ -1098,8 +1103,8 @@ void loop()
 					} else {
 						loco2.loco->speed = 1;
 					}
-
-
+	//				Serial.println(F("L2R"));
+					break;
 				}
 				lcd.go(0,4);
 				lcd.print(loco2.loco->address);
@@ -1113,7 +1118,7 @@ void loop()
 				}
 				lcd.go(8,4);
 				lcd.write(0x7c);
-				lcd.print(loco2.track_segment,10);
+				lcd.print(loco2.track_segment+1,10);
 
 				lcd.go(0,5);
 				for (uint8_t i = 0; i < MAX_TRACKS; i++) {

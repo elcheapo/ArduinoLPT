@@ -387,6 +387,52 @@ uint8_t is_it_loco(t_loco_on_track &loco1,uint8_t segment) {
 	uint8_t	found=0;
 	switch(segment) {
 	case O_V1: {
+		if (loco1.track_segment == O_V3)  found= 1;
+		break;
+		}
+	case O_V2: {
+		if (loco1.track_segment == O_V4)  found= 1;
+		break;
+		}
+	case O_V3: {
+		if ((loco1.track_segment == O_V5)  && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
+		break;
+		}
+	case O_V4: {
+		if ((loco1.track_segment == O_V5) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
+		break;
+		}
+	case O_V5: {
+		if ((loco1.track_segment == O_V7) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V6) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
+		break;
+		}
+	case O_V6: {
+		if (loco1.track_segment == O_V8)  found= 1;
+		break;
+		}
+	case O_V7: {
+		if (loco1.track_segment == O_V9)  found= 1;
+		break;
+		}
+	case O_V8: {
+		if ((loco1.track_segment == O_V10) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
+		break;
+		}
+	case O_V9: {
+		if ((loco1.track_segment == O_V10) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
+		break;
+		}
+	case O_V10: {
+		if ((loco1.track_segment == O_V2) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
+		if ((loco1.track_segment == O_V1) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
+		break;
+		}
+	default:
+		break;
+	}
+#if 0
+	case O_V1: {
 		if ((loco1.track_segment == O_V3) && (quel_sens(loco1) == horaire)) found= 1;
 		if ((loco1.track_segment == O_V10) && (quel_sens(loco1) == antihoraire) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
 		break;
@@ -443,6 +489,8 @@ uint8_t is_it_loco(t_loco_on_track &loco1,uint8_t segment) {
 	default:
 		break;
 	}
+
+#endif
 	return found;
 }
 
@@ -456,16 +504,21 @@ void follow_loco(void) {
 			// Is it loco1 ? loco1 was last seen in loco1.track_segment
 			if (is_it_loco(loco1,i) != 0 ) {
 				loco1.track_segment = i;
+				Serial.print(F("Loco1 on V"));
+				Serial.println(i+1,10);
 			// or loco2 ?
 			} else if (is_it_loco(loco2,i) != 0 ) {
 				loco2.track_segment = i;
+				Serial.print(F("Loco2 on V"));
+				Serial.println(i+1,10);
 			} else {
-				buzzer_on(50); // something weird happened ...
-				Serial.print(F("Unidentified thing on track :"));
-				Serial.println(i,10);
+//				buzzer_on(50); // something weird happened ...
+				Serial.print(F("UFO: "));
+				Serial.println(i+1,10);
 			}
 		}
 	}
+#if 0
 	// Also make sure the locos are still where they should be ...
 	if (tracks[loco1.track_segment].occupied == 0) {
 		// We lost loco1 ???
@@ -477,6 +530,7 @@ void follow_loco(void) {
 //		buzzer_on(50);
 		Serial.println(F("Lost LOCO2"));
 	}
+#endif
 	loco_last_time = millis();
 }
 int8_t read_loco_on_prog_track(t_loco_on_track &newloco) {
@@ -695,6 +749,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		if (loco.to_unlock != NULL) {
 			loco.to_unlock->unlock();
 			loco.to_unlock = NULL;
+			loco.unlock_time = 0;
 		}
 	}
 
@@ -745,6 +800,7 @@ t_control control_loco(t_loco_on_track &loco) {
 	if (tracks[loco.next_track_segment].occupied != 0) {
 		// There is somebody there, stop in 3 seconds
 		loco.stop_time = millis() + 3000;
+		Serial.write('B');
 		return slow_down;
 	} else {
 		loco.stop_time = 0;
@@ -759,7 +815,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		break;
 	case O_V10: {
 		if (loco.next_track_segment == O_V9) {
-			if (aiguillage[A_NW].set_state_and_lock(s_droit) ) {
+			if (!aiguillage[A_NW].set_state_and_lock(s_droit) ) {
 				// We have set and locked the point, take a note to unlock it ...
 				loco.to_unlock = &aiguillage[A_NW];
 			} else {
@@ -768,7 +824,7 @@ t_control control_loco(t_loco_on_track &loco) {
 				return slow_down;
 			}
 		} else {
-			if (aiguillage[A_NW].set_state_and_lock(s_devie) ) {
+			if (!aiguillage[A_NW].set_state_and_lock(s_devie) ) {
 				// We have set and locked the point, take a note to unlock it ...
 				loco.to_unlock = &aiguillage[A_NW];
 			} else {
@@ -781,7 +837,7 @@ t_control control_loco(t_loco_on_track &loco) {
 	}
 	case O_V5: {
 		if (loco.next_track_segment == O_V4) {
-			if (aiguillage[A_SE].set_state_and_lock(s_droit) ) {
+			if (!aiguillage[A_SE].set_state_and_lock(s_droit) ) {
 				// We have set and locked the point, take a note to unlock it ...
 				loco.to_unlock = &aiguillage[A_SE];
 			} else {
@@ -790,7 +846,7 @@ t_control control_loco(t_loco_on_track &loco) {
 				return slow_down;
 			}
 		} else {
-			if (aiguillage[A_SE].set_state_and_lock(s_devie) ) {
+			if (!aiguillage[A_SE].set_state_and_lock(s_devie) ) {
 				// We have set and locked the point, take a note to unlock it ...
 				loco.to_unlock = &aiguillage[A_SE];
 			} else {
@@ -801,7 +857,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		}
 		break;
 	case O_V6: {
-		if (aiguillage[A_NE].set_state_and_lock(s_devie) ) {
+		if (!aiguillage[A_NE].set_state_and_lock(s_devie) ) {
 			// We have set and locked the point, take a note to unlock it ...
 			loco.to_unlock = &aiguillage[A_NE];
 		} else {
@@ -812,7 +868,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		break;
 	}
 	case O_V7: {
-		if (aiguillage[A_NE].set_state_and_lock(s_droit) ) {
+		if (!aiguillage[A_NE].set_state_and_lock(s_droit) ) {
 			// We have set and locked the point, take a note to unlock it ...
 			loco.to_unlock = &aiguillage[A_NE];
 		} else {
@@ -823,7 +879,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		break;
 	}
 	case O_V1: {
-		if (aiguillage[A_SW].set_state_and_lock(s_devie) ) {
+		if (!aiguillage[A_SW].set_state_and_lock(s_devie) ) {
 			// We have set and locked the point, take a note to unlock it ...
 			loco.to_unlock = &aiguillage[A_SW];
 		} else {
@@ -834,7 +890,7 @@ t_control control_loco(t_loco_on_track &loco) {
 		break;
 	}
 	case O_V2: {
-		if (aiguillage[A_SW].set_state_and_lock(s_droit) ) {
+		if (!aiguillage[A_SW].set_state_and_lock(s_droit) ) {
 			// We have set and locked the point, take a note to unlock it ...
 			loco.to_unlock = &aiguillage[A_SW];
 		} else {
