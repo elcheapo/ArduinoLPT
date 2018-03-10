@@ -383,49 +383,49 @@ uint8_t find_next_segment(t_loco_on_track & loco, uint8_t current_segment) {
 	return (0xFF);
 }
 #endif
-uint8_t is_it_loco(t_loco_on_track &loco1,uint8_t segment) {
+uint8_t is_it_loco(t_loco_on_track &this_loco,uint8_t segment) {
 	uint8_t	found=0;
 	switch(segment) {
 	case O_V1: {
-		if (loco1.track_segment == O_V3)  found= 1;
+		if (this_loco.track_segment == O_V3)  found= 1;
 		break;
 		}
 	case O_V2: {
-		if (loco1.track_segment == O_V4)  found= 1;
+		if (this_loco.track_segment == O_V4)  found= 1;
 		break;
 		}
 	case O_V3: {
-		if ((loco1.track_segment == O_V5)  && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
+		if ((this_loco.track_segment == O_V5)  && (aiguillage[A_SE].get_state() == s_devie)) found= 1;
 		break;
 		}
 	case O_V4: {
-		if ((loco1.track_segment == O_V5) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
+		if ((this_loco.track_segment == O_V5) && (aiguillage[A_SE].get_state() == s_droit)) found= 1;
 		break;
 		}
 	case O_V5: {
-		if ((loco1.track_segment == O_V7) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
-		if ((loco1.track_segment == O_V6) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
+		if ((this_loco.track_segment == O_V7) && (aiguillage[A_NE].get_state() == s_droit)) found= 1;
+		if ((this_loco.track_segment == O_V6) && (aiguillage[A_NE].get_state() == s_devie)) found= 1;
 		break;
 		}
 	case O_V6: {
-		if (loco1.track_segment == O_V8)  found= 1;
+		if (this_loco.track_segment == O_V8)  found= 1;
 		break;
 		}
 	case O_V7: {
-		if (loco1.track_segment == O_V9)  found= 1;
+		if (this_loco.track_segment == O_V9)  found= 1;
 		break;
 		}
 	case O_V8: {
-		if ((loco1.track_segment == O_V10) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
+		if ((this_loco.track_segment == O_V10) && (aiguillage[A_NW].get_state() == s_devie)) found= 1;
 		break;
 		}
 	case O_V9: {
-		if ((loco1.track_segment == O_V10) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
+		if ((this_loco.track_segment == O_V10) && (aiguillage[A_NW].get_state() == s_droit)) found= 1;
 		break;
 		}
 	case O_V10: {
-		if ((loco1.track_segment == O_V2) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
-		if ((loco1.track_segment == O_V1) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
+		if ((this_loco.track_segment == O_V2) && (aiguillage[A_SW].get_state() == s_droit)) found= 1;
+		if ((this_loco.track_segment == O_V1) && (aiguillage[A_SW].get_state() == s_devie)) found= 1;
 		break;
 		}
 	default:
@@ -500,6 +500,7 @@ void follow_loco(void) {
 	if(enable_follow_loco == 0) return;
 	for (i=0; i<MAX_TRACKS; i++) {
 		if (tracks[i].timestamp > loco_last_time) {
+			Serial.write('F');
 			// something has been detected on this track segment since last time we checked
 			// Is it loco1 ? loco1 was last seen in loco1.track_segment
 			// Simplify scheme, just look at the loco structure, the loco knows where it is going. and we only set the next_track_segment once we know we can go on it
@@ -507,15 +508,19 @@ void follow_loco(void) {
 				loco1.track_segment = i;
 				Serial.print(F("Loco1 on V"));
 				Serial.println(i+1,10);
+				//ignore detection for 2 seconds
+				loco_last_time=millis() + 2000;
 			// or loco2 ?
 			} else if (loco2.next_track_segment == i ) {
 				loco2.track_segment = i;
 				Serial.print(F("Loco2 on V"));
 				Serial.println(i+1,10);
+				//ignore detection for 2 seconds
+				loco_last_time=millis() + 2000;
 			} else {
 //				buzzer_on(50); // something weird happened ...
-				Serial.print(F("UFO: "));
-				Serial.println(i+1,10);
+//				Serial.print(F("UFO: "));
+//				Serial.println(i+1,10);
 			}
 
 #if 0

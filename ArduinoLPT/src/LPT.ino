@@ -115,12 +115,12 @@ const t_io occupancy[] PROGMEM = {
 #define TL_V5 5
 
 const t_signal traffic_lights[] PROGMEM = {
-		{ {&i2c_port3, 0x0} /* 1 -> 10 Rouge */ ,{&i2c_port3, 0x0}} // 1 -> 10 Vert */
-		,{{&i2c_port3, 0x0} /* 2 -> 10 Rouge */ ,{&i2c_port3, 0x0}} /* 2 -> 10 Vert */
-		,{{&i2c_port3, 0x0} /* 10 -> 8/9 Rouge */ ,{&i2c_port3, 0x0}} /* 10 -> 8/9 Vert */
-		,{{&i2c_port3, 0x0} /* 7 -> 5 Rouge */ ,{&i2c_port3, 0x0}} /* 7 -> 5 Vert */
-		,{{&i2c_port2, 0x0} /* 6 -> 5 Rouge */	,{&i2c_port2, 0x0}} /* 6 -> 5 Vert */
-		,{{&i2c_port2, 0x0} /* 5 -> 3/4 Rouge*/ ,{&i2c_port2, 0x0}} /* 5 -> 3/4 Vert */
+		{ {&i2c_port3, 0x08} /* 1 -> 10 Rouge */ ,{&i2c_port3, 0x10}} // 1 -> 10 Vert */
+		,{{&i2c_port3, 0x40} /* 2 -> 10 Rouge */ ,{&i2c_port3, 0x20}} /* 2 -> 10 Vert */
+		,{{&i2c_port1, 0x08} /* 10 -> 8/9 Rouge */ ,{&i2c_port1, 0x10}} /* 10 -> 8/9 Vert */
+		,{{&i2c_port5, 0x10} /* 7 -> 5 Rouge */ ,{&i2c_port5, 0x20}} /* 7 -> 5 Vert */
+		,{{&i2c_port5, 0x08} /* 6 -> 5 Rouge */	,{&i2c_port5, 0x04}} /* 6 -> 5 Vert */
+		,{{&i2c_port5, 0x80} /* 5 -> 3/4 Rouge*/ ,{&i2c_port5, 0x40}} /* 5 -> 3/4 Vert */
 };
 
 
@@ -920,10 +920,10 @@ void loop()
 		/**************************************************************************************************************/
 
 		loco1.track_segment = O_V7;
-		loco1.next_track_segment = O_V5;
+		loco1.next_track_segment = O_V7;
 		loco2.track_segment = O_V6;
-		loco2.next_track_segment = O_V5;
-		loco_last_time=millis();
+		loco2.next_track_segment = O_V6;
+		loco_last_time=0;
 		enable_follow_loco = 1;
 // Now we are ready to run ... the loco should never bump into each other ...
 
@@ -1039,7 +1039,7 @@ void loop()
 				lcd.go(3,3);
 				if (speed != 1) {
 					lcd.write(0x81);
-					lcd.print(speed & 0x7f);
+					lcd.print(loco1.loco->speed & 0x7f);
 				} else {
 					lcd.write('-');
 					lcd.print(F(" 0"));
@@ -1112,14 +1112,16 @@ void loop()
 				lcd.go(3,4);
 				if (speed != 1) {
 					lcd.write(0x81);
-					lcd.print(speed & 0x7f);
+					lcd.print(loco2.loco->speed & 0x7f);
 				} else {
 					lcd.write('-');
 					lcd.print(F(" 0"));
 				}
 				lcd.go(8,4);
 				lcd.write(0x7c);
-				lcd.print(loco2.track_segment+1,10);
+				lcd.print(loco2.track_segment+1,16);
+				lcd.write(0x7c);
+				lcd.print(loco2.next_track_segment+1,16);
 
 				lcd.go(0,5);
 				for (uint8_t i = 0; i < MAX_TRACKS; i++) {
