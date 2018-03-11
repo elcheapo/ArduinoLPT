@@ -53,12 +53,14 @@ typedef struct {
 	uint8_t reversed;
 	uint8_t constructeur;
 	uint8_t version;
+	bool blocked;
+	bool point_set;
 	uint32_t stop_time;
 	uint32_t unlock_time;
 	aiguille * to_unlock;
 } t_loco_on_track;
 
-typedef enum {ok_to_run, slow_down, stop_now} t_control;
+//typedef enum {ok_to_run, slow_down, stop_now} t_control;
 
 typedef enum {horaire,antihoraire} sens;
 
@@ -145,13 +147,13 @@ const relais_t relais[] PROGMEM = {
 		,{{&i2c_port2, 0x01},0} // Garage Droit OK
 		,{{&i2c_port2, 0x02},0} // Grarge Devie OK
 };
-
-aiguille aiguillage[5] = {
-	{&relais[0],&relais[1],t_peco} // Aiguillage type Peco
-	, {&relais[2],&relais[3],t_peco} // Aiguillage type Peco
-	, {&relais[4],&relais[5],t_peco} // Aiguillage type Peco
-	, {&relais[6],&relais[7],t_peco} // Aiguillage type Peco
-	, {&relais[8],&relais[9],t_peco} // Aiguillage type Peco
+#define MAX_AIGUILLE 5
+aiguille aiguillage[MAX_AIGUILLE] = {
+		{&relais[0],&relais[1],t_peco} // Aiguillage type Peco
+		, {&relais[2],&relais[3],t_peco} // Aiguillage type Peco
+		, {&relais[4],&relais[5],t_peco} // Aiguillage type Peco
+		, {&relais[6],&relais[7],t_peco} // Aiguillage type Peco
+		, {&relais[8],&relais[9],t_peco} // Aiguillage type Peco
 };
 
 
@@ -180,6 +182,8 @@ t_track tracks[MAX_TRACKS] = {
 		,{0,0,&occupancy[8]}
 		,{0,0,&occupancy[9]}
 };
+
+#define LOCO_STOP_TIME 2000
 
 
 Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
@@ -225,14 +229,14 @@ void setup() {
 	pinMode(A3, OUTPUT);
 	digitalWrite(A3,LOW);
 	// We use millis() to account for time measurements
-//	TIMSK0 |= 1<<OCIE0A;
+	//	TIMSK0 |= 1<<OCIE0A;
 	which_one = 0;
 	current_alarm = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
 	radio_ok = 0;
 	enable_follow_loco = 0;
 	function_loco = 1;
-	loco_last_time = 0;
+//	loco_last_time = 0;
 	scan_time = 0;
 	Serial.begin(115200);
 	SPI.begin();
@@ -265,7 +269,7 @@ void setup() {
 	} else {
 		Serial.print(F("Radio NOT OK : 0x"));
 		Serial.println(status,16);
-//		while (1); // We can ignore error if it is not there
+		//		while (1); // We can ignore error if it is not there
 		// If higher bit of radio status is not 0 - we have a wiring issue ...
 	}
 #if 0
@@ -301,7 +305,7 @@ void setup() {
 
 
 	}
- while (1);
+	while (1);
 #endif
 #if 0
 	/* Dump T_io's */
@@ -333,7 +337,7 @@ void setup() {
 
 	}
 
- while (1);
+	while (1);
 #endif
 
 	last = 0;
@@ -806,9 +810,10 @@ void loop()
 	case 'C' : {
 		// digital mode - Automatic
 		station_mode = digital;
+		enable_follow_loco = 0;
 
 		Serial.println(F("Auto - getting loco1"));
-		
+
 		if( read_loco_on_prog_track(loco1) == -1) {
 			Serial.print(F("Error setting loco 1"));
 			break;
@@ -825,10 +830,17 @@ void loop()
 		aiguillage[A_SE].set_state(s_devie);
 		delay(250);
 		if (loco1.reversed  == 0) {
-			loco1.loco->speed = 0x80 + 50;
+			loco1.loco->speed = 0x80 + 60;
 		} else {
-			loco1.loco->speed = 50;
+			loco1.loco->speed = 60;
 		}
+		lcd.menu(F("            "),
+				F(" Mise en    "),
+				F(" position   "),
+				F(" de la loco "),
+				F("            "),
+				F("            ")
+		);
 		// Now wait until we see the loco in O_V7
 		while (tracks[O_V10].occupied == 0)
 			delay(100);
@@ -871,10 +883,17 @@ void loop()
 		aiguillage[A_SE].set_state(s_devie);
 		delay(250);
 		if (loco2.reversed  == 0) {
-			loco2.loco->speed = 0x80 + 50;
+			loco2.loco->speed = 0x80 + 60;
 		} else {
-			loco2.loco->speed = 50;
+			loco2.loco->speed = 60;
 		}
+		lcd.menu(F("            "),
+				F(" Mise en    "),
+				F(" position   "),
+				F(" de la loco "),
+				F("            "),
+				F("            ")
+		);
 		// Now wait until we see the loco in O_V6
 		while (tracks[O_V10].occupied == 0)
 			delay(100);
@@ -903,7 +922,7 @@ void loop()
 				F(" en position"),
 				F("  medianes  "),
 				F("            ")
-				);
+		);
 
 		uint8_t done = 0;
 		while (done == 0) {
@@ -923,9 +942,26 @@ void loop()
 		loco1.next_track_segment = O_V7;
 		loco2.track_segment = O_V6;
 		loco2.next_track_segment = O_V6;
-		loco_last_time=0;
-		enable_follow_loco = 1;
-// Now we are ready to run ... the loco should never bump into each other ...
+		loco1.point_set = false;
+		loco2.point_set = false;
+//		loco_last_time=0;
+		// Make sure all points are unlocked
+		for (uint8_t i=0; i<5; i++) {
+			aiguillage[i].unlock();
+
+		}
+		// Initialize the next_track_segments and lock loco2
+		if ( control_loco(loco1) ) {
+			Serial.println(F("Loco1 Blocked"));
+		}
+		if ( control_loco(loco2) ) {
+			Serial.println(F("Loco2 Blocked"));
+		}
+		loco_next_time = 0;
+		follow_loco_enable();
+
+		delay(200);
+		// Now we are ready to run ... the loco should never bump into each other ...
 
 
 		dcc_control.begin(digital);
@@ -989,37 +1025,12 @@ void loop()
 					loco1.loco->speed = 0;
 				}
 				// Can we let the guy drive ?
-				switch (control_loco(loco1)) {
-				uint8_t temp_speed;
-				case stop_now:
-					loco1.loco->speed = 1;
-					Serial.println(F("L1S"));
-					break;
-				case slow_down:
-					temp_speed = loco1.loco->speed & 0x7f;
-					switch (temp_speed) {
-					case 31 ... 127: {
-						temp_speed = 30;
-						break;
-					}
-					case 10 ... 30: {
-						temp_speed = temp_speed /2;
-						break;
-					}
-					case 0 ... 9:
-					default: {
-						temp_speed = 1;
-						break;
-					}
-					}
-					if (loco1.reversed  == 0) {
-						loco1.loco->speed = 0x80 + temp_speed;
-					} else {
-						loco1.loco->speed = temp_speed;
-					}
-					Serial.println(F("L1s"));
-					break;
-				case ok_to_run:
+				if (control_loco(loco1)) {
+					// We need to stop
+//					if (millis() > loco1.stop_time) {
+						loco1.loco->speed = 1;
+//					}
+				} else {
 					// Only allow clockwise ...
 					if (position > 530) {
 						speed = ((position-520) >> 2) + 2 ;
@@ -1031,8 +1042,6 @@ void loop()
 					} else {
 						loco1.loco->speed = 1;
 					}
-	//				Serial.println(F("L1R"));
-					break;
 				}
 				lcd.go(0,3);
 				lcd.print(loco1.loco->address);
@@ -1045,11 +1054,14 @@ void loop()
 					lcd.print(F(" 0"));
 				}
 				lcd.go(8,3);
-				lcd.write(0x7c);
+				if (loco1.blocked) {
+					lcd.write('*');
+				} else {
+					lcd.write(0x7c);
+				}
 				lcd.print(loco1.track_segment+1,16);
 				lcd.write(0x7c);
 				lcd.print(loco1.next_track_segment+1,16);
-
 
 				// Loco controled by pot2
 
@@ -1062,37 +1074,12 @@ void loop()
 					loco2.loco->speed = 0;
 				}
 				// Can we let the guy drive ?
-				switch (control_loco(loco2)) {
-				uint8_t temp_speed;
-				case stop_now:
-					loco2.loco->speed = 1;
-					Serial.println(F("L2S"));
-					break;
-				case slow_down:
-					temp_speed = loco2.loco->speed & 0x7f;
-					switch (temp_speed) {
-					case 31 ... 127: {
-						temp_speed = 30;
-						break;
+				if (control_loco(loco2)) {
+					// We need to stop
+					if (millis() > loco2.stop_time) {
+						loco2.loco->speed = 1;
 					}
-					case 10 ... 30: {
-						temp_speed = temp_speed /2;
-						break;
-					}
-					case 0 ... 9:
-					default: {
-						temp_speed = 1;
-						break;
-					}
-					}
-					if (loco2.reversed  == 0) {
-						loco2.loco->speed = 0x80 + temp_speed;
-					} else {
-						loco2.loco->speed = temp_speed;
-					}
-					Serial.println(F("L2s"));
-					break;
-				case ok_to_run:
+				} else {
 					// Only allow clockwise ...
 					if (position > 530) {
 						speed = ((position-520) >> 2) + 2 ;
@@ -1104,8 +1091,6 @@ void loop()
 					} else {
 						loco2.loco->speed = 1;
 					}
-	//				Serial.println(F("L2R"));
-					break;
 				}
 				lcd.go(0,4);
 				lcd.print(loco2.loco->address);
@@ -1118,7 +1103,11 @@ void loop()
 					lcd.print(F(" 0"));
 				}
 				lcd.go(8,4);
-				lcd.write(0x7c);
+				if (loco2.blocked) {
+					lcd.write('*');
+				} else {
+					lcd.write(0x7c);
+				}
 				lcd.print(loco2.track_segment+1,16);
 				lcd.write(0x7c);
 				lcd.print(loco2.next_track_segment+1,16);
@@ -1131,15 +1120,20 @@ void loop()
 						lcd.write('-');
 					}
 				}
-
+				for (uint8_t i = 0; i < MAX_AIGUILLE; i++) {
+					if (aiguillage[i].is_locked()){
+						lcd.pseudo_led(i, 1);
+					} else {
+						lcd.pseudo_led(i, 0);
+					}
+				}
 			}
 		}
 		break;
-
-	}
+	} /* End Case 'C' */
 	default:
 		break;
-	} /* End Case */
+	}
 }
 
 

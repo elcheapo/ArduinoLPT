@@ -28,12 +28,12 @@ aiguille::aiguille(const relais_t * _act_droit, const relais_t * _act_devie, a_t
 bool aiguille::set_state(a_state position) {
 	const relais_t * act_relais;
 
-	// Relais already in the right position ? just return
-	if (position == state) return true;
 	// if we don't care, skip
 	if (position == s_dontcare) return true;
 
 	if (!locked) {
+		// Relais already in the right position ? just return
+		if (position == state) return true;
 		if(position == s_droit) {
 			act_relais = act_droit;
 			state = s_droit;

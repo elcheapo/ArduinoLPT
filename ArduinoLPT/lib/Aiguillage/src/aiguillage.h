@@ -28,10 +28,14 @@ public:
 	bool set_state(a_state position);
 	bool set_state_and_lock(a_state position);
 	void unlock(void);
+	bool is_locked(void);
 	a_state get_state(void);
 };
 
 inline a_state aiguille::get_state(void) {
 	return state;
+}
+inline bool aiguille::is_locked(void) {
+	return locked;
 }
 #endif /* AIGUILLAGE_H_ */
