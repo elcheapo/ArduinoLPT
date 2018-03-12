@@ -467,6 +467,7 @@ void loop()
 		break;
 	}
 	case '4': {
+		uint8_t light_no = 0;
 		Serial.println(F("Testing all points"));
 		lcd.menu(F("            "),
 				F(" TESTING    "),
@@ -475,21 +476,29 @@ void loop()
 				F("            "),
 				F(" * : Sortie "));
 		while (1) {
-			for (uint8_t i = 0; i<6; i++) {
-				delay(500);
-				lcd.go(0,4);
-				set_light(&traffic_lights[i], l_red);
-				lcd.print (i,10);
-				lcd.print(F(" Rouge "));
-				delay(500);
-				set_light(&traffic_lights[i], l_green);
-				lcd.go(0,4);
-				lcd.print (i,10);
-				lcd.print(F(" Green  "));
-				delay(500);
-				set_light(&traffic_lights[i], l_off);
-			}
+			delay(200);
 			key=kbd.get_key_debounced(last);
+			lcd.go(0,4);
+			switch (key) {
+			case '1'...'6':
+				light_no = key - '1';
+				break;
+			case 'A':
+				set_light(&traffic_lights[light_no], l_red);
+				lcd.print (light_no,10);
+				lcd.print(F(" Rouge "));
+				break;
+			case 'B':
+				set_light(&traffic_lights[light_no], l_green);
+				lcd.print (light_no,10);
+				lcd.print(F(" Green  "));
+				break;
+			case 'C':
+				set_light(&traffic_lights[light_no], l_off);
+				lcd.print (light_no,10);
+				lcd.print(F(" OFF    "));
+				break;
+			}
 			if (key == '*') break;
 		}
 		break;
