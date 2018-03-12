@@ -503,29 +503,32 @@ void follow_loco_enable(void) {
 }
 
 //uint32_t loco_last_time;
-uint32_t loco_next_time;
+//uint32_t loco_next_time;
 void follow_loco(void) {
 	if(enable_follow_loco == 0) return;
-	// Don't do it too often : every 100 ms
-	if (!(millis() > loco_next_time)) return;
+	// Don't do it too often : every 200 ms
+//	if (!(millis() > loco_next_time)) return;
 
 	// Let's look at loco1
-	if (!loco1.blocked) {
-		if (tracks[loco1.next_track_segment].occupied != 0) {
+	// The loco should not be blocked and moving
+	if ( (!loco1.blocked) && (loco1.loco->speed != 1) ) {
+		// The loco might have arrived on the next track segment and this segment should not be where the other loco is
+		if ( (tracks[loco1.next_track_segment].occupied != 0) && (loco2.track_segment != loco1.next_track_segment)) {
 			// Loco is in the next segment
 			loco1.track_segment = loco1.next_track_segment;
-			Serial.print(F("L1 on V"));
-			Serial.println(loco1.next_track_segment+1,10);
+//			Serial.print(F("L1 on V"));
+//			Serial.println(loco1.next_track_segment+1,10);
 		}
 	}
-	if (!loco2.blocked) {
-		if (tracks[loco2.next_track_segment].occupied != 0) {
+	if ( (!loco2.blocked) && (loco2.loco->speed != 1) ) {
+		if ( (tracks[loco2.next_track_segment].occupied != 0) && (loco1.track_segment != loco2.next_track_segment) ) {
 			// Loco is in the next segment
 			loco2.track_segment = loco2.next_track_segment;
-			Serial.print(F("L2 on V"));
-			Serial.println(loco2.next_track_segment+1,10);
+//			Serial.print(F("L2 on V"));
+//			Serial.println(loco2.next_track_segment+1,10);
 		}
 	}
+//	loco_next_time = millis() + 200;
 }
 
 #if 0
@@ -797,7 +800,8 @@ void process_function (locomem * loco_ptr, uint8_t key) {
 
 bool control_loco(t_loco_on_track &loco) {
 	// Only clockwise for now ...
-
+	// Make sure we have the latest status ...
+	follow_loco();
 	// can we unlock the point - 5 seconds after we enter the track segment (next loco cannot enter because segment is busy)
 	// We may do this multiple times while the loco is waiting but loco.loco_to_unlock is NULL the second time
 	if ( (loco.unlock_time != 0 ) && (millis() > loco.unlock_time ) ) {
@@ -807,6 +811,8 @@ bool control_loco(t_loco_on_track &loco) {
 			loco.unlock_time = 0;
 		}
 	}
+	// When the loco is stopped, make sure we redo the point before going
+	if (loco.loco->speed == 1) loco.point_set = false;
 
 	// Did we get onto the "next track segment"  ?
 	if (loco.track_segment == loco.next_track_segment) {
@@ -857,9 +863,6 @@ bool control_loco(t_loco_on_track &loco) {
 	// Is it free ?
 	if (tracks[loco.next_track_segment].occupied != 0) {
 		// There is somebody there, stop in 3 seconds
-		if (loco.stop_time == 0) {
-			loco.stop_time = millis() + LOCO_STOP_TIME;
-		}
 		Serial.write('B');
 		loco.blocked = true;
 		return true;
@@ -882,8 +885,6 @@ bool control_loco(t_loco_on_track &loco) {
 					loco.to_unlock = &aiguillage[A_NW];
 				} else {
 					// can't set the point for now - just stop in 3 sec
-					loco.stop_time = millis() + LOCO_STOP_TIME;
-					loco.blocked = true;
 					return true;
 				}
 			} else {
@@ -892,8 +893,6 @@ bool control_loco(t_loco_on_track &loco) {
 					loco.to_unlock = &aiguillage[A_NW];
 				} else {
 					// can't set the point for now - just stop in 3 sec
-					loco.stop_time = millis() + LOCO_STOP_TIME;
-					loco.blocked = true;
 					return true;
 				}
 			}
@@ -906,8 +905,6 @@ bool control_loco(t_loco_on_track &loco) {
 					loco.to_unlock = &aiguillage[A_SE];
 				} else {
 					// can't set the point for now - just stop in 3 sec
-					loco.stop_time = millis() + LOCO_STOP_TIME;
-					loco.blocked = true;
 					return true;
 				}
 			} else {
@@ -916,8 +913,6 @@ bool control_loco(t_loco_on_track &loco) {
 					loco.to_unlock = &aiguillage[A_SE];
 				} else {
 					// can't set the point for now - just stop in 3 sec
-					loco.stop_time = millis() + LOCO_STOP_TIME;
-					loco.blocked = true;
 					return true;
 				}
 			}
@@ -929,8 +924,6 @@ bool control_loco(t_loco_on_track &loco) {
 				loco.to_unlock = &aiguillage[A_NE];
 			} else {
 				// can't set the point for now - just stop in 3 sec
-				loco.stop_time = millis() + LOCO_STOP_TIME;
-				loco.blocked = true;
 				return true;
 			}
 			break;
@@ -941,8 +934,6 @@ bool control_loco(t_loco_on_track &loco) {
 				loco.to_unlock = &aiguillage[A_NE];
 			} else {
 				// can't set the point for now - just stop in 3 sec
-				loco.stop_time = millis() + LOCO_STOP_TIME;
-				loco.blocked = true;
 				return true;
 			}
 			break;
@@ -953,8 +944,6 @@ bool control_loco(t_loco_on_track &loco) {
 				loco.to_unlock = &aiguillage[A_SW];
 			} else {
 				// can't set the point for now - just stop in 3 sec
-				loco.stop_time = millis() + LOCO_STOP_TIME;
-				loco.blocked = true;
 				return true;
 			}
 			break;
@@ -965,8 +954,6 @@ bool control_loco(t_loco_on_track &loco) {
 				loco.to_unlock = &aiguillage[A_SW];
 			} else {
 				// can't set the point for now - just stop in 3 sec
-				loco.stop_time = millis() + LOCO_STOP_TIME;
-				loco.blocked = true;
 				return true;
 			}
 			break;
@@ -974,7 +961,6 @@ bool control_loco(t_loco_on_track &loco) {
 		}
 		loco.point_set = true;
 	}
-	loco.blocked = false;
 	return false;
 }
 

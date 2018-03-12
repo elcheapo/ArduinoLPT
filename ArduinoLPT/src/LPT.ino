@@ -183,7 +183,7 @@ t_track tracks[MAX_TRACKS] = {
 		,{0,0,&occupancy[9]}
 };
 
-#define LOCO_STOP_TIME 2000
+#define LOCO_STOP_TIME 1000
 
 
 Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
@@ -379,8 +379,9 @@ void loop()
 			F(" Select     "),
 			F(" A = Analog "),
 			F(" B = Read Adr"),
-			F(" D = digital"),
-			F(" \x80\x80\x80\x80 - \x81\x81\x81\x81"));
+			F(" C = Auto    "),
+			F(" D = digital")
+			);
 
 	key = 0;
 	while (key == 0) {
@@ -938,6 +939,12 @@ void loop()
 		}
 		/**************************************************************************************************************/
 
+		dcc_control.begin(digital);
+		dcc_control.set_queue();
+		// Activate main track, disable programming track
+		digitalWrite(A2,HIGH);
+		digitalWrite(A3,LOW);
+
 		loco1.track_segment = O_V7;
 		loco1.next_track_segment = O_V7;
 		loco2.track_segment = O_V6;
@@ -950,6 +957,12 @@ void loop()
 			aiguillage[i].unlock();
 
 		}
+//		loco_next_time = 0;
+		follow_loco_enable();
+
+		delay(200);
+		// Now we are ready to run ... the loco should never bump into each other ...
+
 		// Initialize the next_track_segments and lock loco2
 		if ( control_loco(loco1) ) {
 			Serial.println(F("Loco1 Blocked"));
@@ -957,18 +970,8 @@ void loop()
 		if ( control_loco(loco2) ) {
 			Serial.println(F("Loco2 Blocked"));
 		}
-		loco_next_time = 0;
-		follow_loco_enable();
 
 		delay(200);
-		// Now we are ready to run ... the loco should never bump into each other ...
-
-
-		dcc_control.begin(digital);
-		dcc_control.set_queue();
-		// Activate main track, disable programming track
-		digitalWrite(A2,HIGH);
-		digitalWrite(A3,LOW);
 
 		// At this point we have 2 loco ready
 		// We can now read the pot values to set the speed ...
@@ -1024,13 +1027,19 @@ void loop()
 					position=512;
 					loco1.loco->speed = 0;
 				}
+				// Make sure the loco postion is updated
+				delay (100);
 				// Can we let the guy drive ?
 				if (control_loco(loco1)) {
-					// We need to stop
-//					if (millis() > loco1.stop_time) {
+					loco1.blocked = true;
+					if (loco1.stop_time == 0) {
+						loco1.stop_time = millis() + LOCO_STOP_TIME;
+					} else if (millis() > loco1.stop_time) {
 						loco1.loco->speed = 1;
-//					}
+					}
 				} else {
+					loco1.blocked = false;
+					loco1.stop_time = 0;
 					// Only allow clockwise ...
 					if (position > 530) {
 						speed = ((position-520) >> 2) + 2 ;
@@ -1073,13 +1082,19 @@ void loop()
 					position=512;
 					loco2.loco->speed = 0;
 				}
+				// Make sure the loco postion is updated
+				delay(100);
 				// Can we let the guy drive ?
 				if (control_loco(loco2)) {
-					// We need to stop
-					if (millis() > loco2.stop_time) {
+					loco2.blocked = true;
+					if (loco2.stop_time == 0) {
+						loco2.stop_time = millis() + LOCO_STOP_TIME;
+					} else if (millis() > loco2.stop_time) {
 						loco2.loco->speed = 1;
 					}
 				} else {
+					loco2.blocked = false;
+					loco2.stop_time = 0;
 					// Only allow clockwise ...
 					if (position > 530) {
 						speed = ((position-520) >> 2) + 2 ;
