@@ -227,11 +227,8 @@ void Nokia5510::normal(void) {
 void Nokia5510::inverse(void) {
 	LcdWrite( LCD_C, 0x0D);	// LCD in normal mode. 0x0d for inverse
 }
-// Don't update the display too often
-uint32_t next_display_update;
 void Nokia5510::update(void) {
 	uint8_t i,j,temp;
-	if (!(millis() > next_display_update)) return;
 	if (lcd_update != 0) {
 		begin();
 		if (led_line != 0) {
@@ -270,7 +267,6 @@ void Nokia5510::update(void) {
 				}
 		}
 		lcd_update =0;
-		next_display_update = millis() + 500;
 	}
 
 }

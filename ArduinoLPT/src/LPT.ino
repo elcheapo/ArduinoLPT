@@ -56,8 +56,8 @@ typedef struct {
 	bool blocked;
 	bool point_set;
 	uint32_t stop_time;
-	uint32_t unlock_time;
-	aiguille * to_unlock;
+	uint8_t to_unlock;
+	uint8_t unlock_segment;
 } t_loco_on_track;
 
 //typedef enum {ok_to_run, slow_down, stop_now} t_control;
@@ -973,14 +973,13 @@ void loop()
 		// Now we are ready to run ... the loco should never bump into each other ...
 
 		// Initialize the next_track_segments and lock loco2
-		if ( control_loco(loco1) ) {
-			Serial.println(F("Loco1 Blocked"));
-		}
-		if ( control_loco(loco2) ) {
-			Serial.println(F("Loco2 Blocked"));
-		}
+//		if ( control_loco(loco1) ) {
+//			Serial.println(F("Loco1 Blocked"));
+//		}
+//		if ( control_loco(loco2) ) {
+//			Serial.println(F("Loco2 Blocked"));
+//		}
 
-		delay(200);
 
 		// At this point we have 2 loco ready
 		// We can now read the pot values to set the speed ...
@@ -1036,8 +1035,6 @@ void loop()
 					position=512;
 					loco1.loco->speed = 0;
 				}
-				// Make sure the loco postion is updated
-				delay (100);
 				// Can we let the guy drive ?
 				if (control_loco(loco1)) {
 					loco1.blocked = true;
@@ -1091,8 +1088,6 @@ void loop()
 					position=512;
 					loco2.loco->speed = 0;
 				}
-				// Make sure the loco postion is updated
-				delay(100);
 				// Can we let the guy drive ?
 				if (control_loco(loco2)) {
 					loco2.blocked = true;
