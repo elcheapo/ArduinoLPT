@@ -225,6 +225,7 @@ void set_light (const t_signal * light, l_state light_state ) {
 }
 
 void light_control (void) {
+	if (!enable_light_control) return;
 	// On V10
 	if (aiguillage[A_NW].get_state() == s_droit) {
 		if (tracks[O_V9].occupied != 0) {
@@ -499,13 +500,13 @@ void follow_loco_enable(void) {
 	for (i=0; i<MAX_TRACKS; i++) {
 		tracks[i].timestamp = 0;
 	}
-	enable_follow_loco = 1;
+	enable_follow_loco = true;;
 }
 
 //uint32_t loco_last_time;
 //uint32_t loco_next_time;
 void follow_loco(void) {
-	if(enable_follow_loco == 0) return;
+	if(!enable_follow_loco) return;
 	// Don't do it too often : every 200 ms
 //	if (!(millis() > loco_next_time)) return;
 
@@ -803,14 +804,14 @@ void process_function (locomem * loco_ptr, uint8_t key) {
 
 }
 
-bool control_loco(t_loco_on_track &loco) {
+bool control_loco(t_loco_on_track &loco, uint16_t position) {
+	bool blocked = false;
 	// Only clockwise for now ...
 	// Make sure we have the latest status ...
 	follow_loco();
 
 	// Did we get onto the "next track segment"  ?
 	if (loco.track_segment == loco.next_track_segment) {
-
 		if (loco.unlock_segment != 99) aiguillage[loco.to_unlock].unlock();
 		loco.unlock_segment = 99;
 
@@ -858,7 +859,7 @@ bool control_loco(t_loco_on_track &loco) {
 	if (tracks[loco.next_track_segment].occupied != 0) {
 		// There is somebody there, stop in 3 seconds
 		Serial.write('B');
-		return true;
+		blocked = true;
 	}
 	if (!loco.point_set) {
 		// Do we need to set a point ? Is it not locked ?
@@ -876,7 +877,7 @@ bool control_loco(t_loco_on_track &loco) {
 					loco.to_unlock = A_NW;
 				} else {
 					// can't set the point for now - just stop in 3 sec
-					return true;
+					blocked = true;
 				}
 			} else {
 				if (aiguillage[A_NW].set_state_and_lock(s_devie) ) {
@@ -884,7 +885,7 @@ bool control_loco(t_loco_on_track &loco) {
 					loco.to_unlock = A_NW;
 				} else {
 					// can't set the point for now - just stop in 3 sec
-					return true;
+					blocked = true;
 				}
 			}
 			break;
@@ -896,7 +897,7 @@ bool control_loco(t_loco_on_track &loco) {
 					loco.to_unlock = A_SE;
 				} else {
 					// can't set the point for now - just stop in 3 sec
-					return true;
+					blocked = true;
 				}
 			} else {
 				if (aiguillage[A_SE].set_state_and_lock(s_devie) ) {
@@ -904,7 +905,7 @@ bool control_loco(t_loco_on_track &loco) {
 					loco.to_unlock = A_SE;
 				} else {
 					// can't set the point for now - just stop in 3 sec
-					return true;
+					blocked = true;
 				}
 			}
 			break;
@@ -915,7 +916,7 @@ bool control_loco(t_loco_on_track &loco) {
 				loco.to_unlock = A_NE;
 			} else {
 				// can't set the point for now - just stop in 3 sec
-				return true;
+				blocked = true;
 			}
 			break;
 		}
@@ -925,7 +926,7 @@ bool control_loco(t_loco_on_track &loco) {
 				loco.to_unlock = A_NE;
 			} else {
 				// can't set the point for now - just stop in 3 sec
-				return true;
+				blocked = true;
 			}
 			break;
 		}
@@ -935,7 +936,7 @@ bool control_loco(t_loco_on_track &loco) {
 				loco.to_unlock = A_SW;
 			} else {
 				// can't set the point for now - just stop in 3 sec
-				return true;
+				blocked = true;
 			}
 			break;
 		}
@@ -945,7 +946,7 @@ bool control_loco(t_loco_on_track &loco) {
 				loco.to_unlock = A_SW;
 			} else {
 				// can't set the point for now - just stop in 3 sec
-				return true;
+				blocked = true;
 			}
 			break;
 		}
@@ -953,9 +954,33 @@ bool control_loco(t_loco_on_track &loco) {
 		loco.point_set = true;
 		loco.unlock_segment = loco.next_track_segment;
 	}
-	return false;
+	if (blocked) {
+		if (loco.stop_time == 0) {
+			loco.stop_time = millis() + LOCO_STOP_TIME;
+		} else if (millis() > loco1.stop_time) {
+			loco.loco->speed = 1;
+		}
+	} else {
+		uint8_t speed;
+		loco.stop_time = 0;
+		// Only allow clockwise ...
+		if (position > 530) {
+			speed = ((position-520) >> 2) + 2 ;
+			if (loco.reversed  == 0) {
+				loco.loco->speed = 0x80 + speed;
+			} else {
+				loco.loco->speed = speed;
+			}
+		} else {
+			loco.loco->speed = 1;
+			// If loco is stopped but not blocked, we release the next point so the other loco can use it
+			loco.point_set = false;
+			if (loco.unlock_segment != 99) aiguillage[loco.to_unlock].unlock();
+			loco.unlock_segment = 99;
+		}
+	}
+	return blocked;
 }
-
 void (* const todo_in_idle[])(void) PROGMEM = {
 //		&scan_col_0,
 //		&scan_col_1,

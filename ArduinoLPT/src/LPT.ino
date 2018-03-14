@@ -191,11 +191,11 @@ DCC_timer dcc_control;
 Potar alarm(CURRENT_SENSE); // Current measurement on Analog 0
 Potar pot1(1);
 Potar Radiopot1, Radiopot2;
-
+bool enable_light_control,enable_follow_loco;
 uint8_t radio_ok;
 
 t_loco_on_track loco1, loco2;
-uint8_t enable_follow_loco,function_loco;
+uint8_t function_loco;
 
 
 //Potar pot2(0);
@@ -234,7 +234,9 @@ void setup() {
 	current_alarm = 0;
 	top_level_delay = 1; // wait until everything is initialized before we enable the helper functions
 	radio_ok = 0;
-	enable_follow_loco = 0;
+	enable_follow_loco = false;
+	enable_light_control = false;
+
 	function_loco = 1;
 //	loco_last_time = 0;
 	scan_time = 0;
@@ -468,6 +470,7 @@ void loop()
 	}
 	case '4': {
 		uint8_t light_no = 0;
+		enable_light_control = false;
 		Serial.println(F("Testing all points"));
 		lcd.menu(F("            "),
 				F(" TESTING    "),
@@ -475,29 +478,32 @@ void loop()
 				F(" Feux       "),
 				F("            "),
 				F(" * : Sortie "));
+		for (uint8_t i; i<6; i++){
+			set_light(&traffic_lights[i], l_off);
+		}
 		while (1) {
 			delay(200);
 			key=kbd.get_key_debounced(last);
 			lcd.go(0,4);
+			lcd.print(F("No:"));
+			lcd.print (light_no,10);
 			switch (key) {
 			case '1'...'6':
 				light_no = key - '1';
 				break;
 			case 'A':
 				set_light(&traffic_lights[light_no], l_red);
-				lcd.print (light_no,10);
 				lcd.print(F(" Rouge "));
 				break;
 			case 'B':
 				set_light(&traffic_lights[light_no], l_green);
-				lcd.print (light_no,10);
 				lcd.print(F(" Green  "));
 				break;
 			case 'C':
 				set_light(&traffic_lights[light_no], l_off);
-				lcd.print (light_no,10);
 				lcd.print(F(" OFF    "));
 				break;
+
 			}
 			if (key == '*') break;
 		}
@@ -511,6 +517,7 @@ void loop()
 		// Analog mode
 		Serial.println(F("Analog"));
 		station_mode = analog;
+		enable_light_control = true;
 		dcc_control.begin(analog);
 		digitalWrite(A2,HIGH);
 		while (1) {
@@ -606,6 +613,7 @@ void loop()
 		uint16_t value;
 		locomem * loco_ptr;
 		station_mode = digital;
+		enable_light_control = true;
 
 		Serial.println(F("Digital"));
 
@@ -820,7 +828,8 @@ void loop()
 	case 'C' : {
 		// digital mode - Automatic
 		station_mode = digital;
-		enable_follow_loco = 0;
+		enable_follow_loco = false;
+		enable_light_control = true;
 
 		Serial.println(F("Auto - getting loco1"));
 
@@ -987,6 +996,7 @@ void loop()
 			uint16_t position;
 			uint8_t key,speed;
 			locomem * loco_ptr;
+			bool blocked;
 
 			// Now update the display
 			delay(200);
@@ -1036,28 +1046,7 @@ void loop()
 					loco1.loco->speed = 0;
 				}
 				// Can we let the guy drive ?
-				if (control_loco(loco1)) {
-					loco1.blocked = true;
-					if (loco1.stop_time == 0) {
-						loco1.stop_time = millis() + LOCO_STOP_TIME;
-					} else if (millis() > loco1.stop_time) {
-						loco1.loco->speed = 1;
-					}
-				} else {
-					loco1.blocked = false;
-					loco1.stop_time = 0;
-					// Only allow clockwise ...
-					if (position > 530) {
-						speed = ((position-520) >> 2) + 2 ;
-						if (loco1.reversed  == 0) {
-							loco1.loco->speed = 0x80 + speed;
-						} else {
-							loco1.loco->speed = speed;
-						}
-					} else {
-						loco1.loco->speed = 1;
-					}
-				}
+				blocked = control_loco(loco1,position);
 				lcd.go(0,3);
 				lcd.print(loco1.loco->address);
 				lcd.go(3,3);
@@ -1069,7 +1058,7 @@ void loop()
 					lcd.print(F(" 0"));
 				}
 				lcd.go(8,3);
-				if (loco1.blocked) {
+				if (blocked) {
 					lcd.write('*');
 				} else {
 					lcd.write(0x7c);
@@ -1089,28 +1078,7 @@ void loop()
 					loco2.loco->speed = 0;
 				}
 				// Can we let the guy drive ?
-				if (control_loco(loco2)) {
-					loco2.blocked = true;
-					if (loco2.stop_time == 0) {
-						loco2.stop_time = millis() + LOCO_STOP_TIME;
-					} else if (millis() > loco2.stop_time) {
-						loco2.loco->speed = 1;
-					}
-				} else {
-					loco2.blocked = false;
-					loco2.stop_time = 0;
-					// Only allow clockwise ...
-					if (position > 530) {
-						speed = ((position-520) >> 2) + 2 ;
-						if (loco2.reversed  == 0) {
-							loco2.loco->speed = 0x80 + speed;
-						} else {
-							loco2.loco->speed = speed;
-						}
-					} else {
-						loco2.loco->speed = 1;
-					}
-				}
+				blocked = control_loco(loco2, position);
 				lcd.go(0,4);
 				lcd.print(loco2.loco->address);
 				lcd.go(3,4);
