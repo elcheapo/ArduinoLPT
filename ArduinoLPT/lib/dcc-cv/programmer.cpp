@@ -79,11 +79,11 @@
 extern message DCC_Reset;
 message prog_message;
 
-#define ACK_LEVEL 15
+#define ACK_LEVEL 16
 #define MIN_ACK 8
 #define MAX_ACK 400
 #define NB_ACK_SEEN 1
-#define TIMEOUT_ACK 50
+#define TIMEOUT_ACK 100
 #define STEP_ACK 1
 #undef DEBUG_UART3
 
@@ -107,7 +107,7 @@ bool set_programmer (DCC_timer * _timer, uint8_t _adc_channel) {
 	ret = false;
 //	while(1) {
 	for (i=0; (i<4) & (ret == false); i++){
-		for(j=0; (j<5) & (ret == false); j++) {
+		for(j=0; (j<7) & (ret == false); j++) {
 			// Try to set a proper ACK level
 			if (direct_mode_bit_verify(8, 7, 1)) {
 				ack1 = 1;
@@ -126,10 +126,12 @@ bool set_programmer (DCC_timer * _timer, uint8_t _adc_channel) {
 			delay( 100 );
 		}
 		// No ack seen lower detection level
-		if (ret == false) ack_level -= 1;
+		if (ret == false) ack_level -= 2;
 	}
-	Serial.print(F("ACK LEVEL DETECTED : "));
-	Serial.println(ack_level,10);
+	if (ret == true) {
+		Serial.print(F("ACK LEVEL DETECTED : "));
+		Serial.println(ack_level,10);
+	}
 	return ret;
 }
 
@@ -154,6 +156,7 @@ uint8_t get_ack_level(void) {
 int8_t programmer(message * prog_message) {
 	int8_t ret = false;
 	uint16_t value;
+	uint32_t time_out;
 #ifdef DEBUG_ACK
 	uint16_t ack_adc = 0;
 	int16_t time_stamps = 0;
@@ -191,7 +194,9 @@ int8_t programmer(message * prog_message) {
    //  watch for ACK on correct channel
 
 	//	ack_valid_counter = 0;
-	for (uint8_t i=0; i< TIMEOUT_ACK/STEP_ACK; i++) {
+    time_out = millis() + TIMEOUT_ACK;
+    while (1) {
+//    for (uint8_t i=0; i< TIMEOUT_ACK/STEP_ACK; i++) {
 		value = analogRead(prog_adc_channel);
 //		Serial.print(F("ACK read at "));
 //		Serial.println(value);
@@ -199,7 +204,9 @@ int8_t programmer(message * prog_message) {
 			ret = true;
 			break;
 		}
-		delay( STEP_ACK );
+//		delay( STEP_ACK );
+		if (millis () > time_out)
+			break;
 	}
 	if (ret == true) {
 		/* Wait until we don't see the ack anymore - just wait 200 ms so we don't get stuck here */

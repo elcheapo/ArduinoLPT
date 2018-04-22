@@ -118,8 +118,8 @@ const t_io occupancy[] PROGMEM = {
 
 const t_signal traffic_lights[] PROGMEM = {
 		{ {&i2c_port3, 0x08} /* 1 -> 10 Rouge */ ,{&i2c_port3, 0x10}} // 1 -> 10 Vert */
-		,{{&i2c_port3, 0x40} /* 2 -> 10 Rouge */ ,{&i2c_port3, 0x20}} /* 2 -> 10 Vert */
-		,{{&i2c_port1, 0x08} /* 10 -> 8/9 Rouge */ ,{&i2c_port1, 0x10}} /* 10 -> 8/9 Vert */
+		,{{&i2c_port3, 0x20} /* 2 -> 10 Rouge */ ,{&i2c_port3, 0x40}} /* 2 -> 10 Vert -- OK */
+		,{{&i2c_port1, 0x08} /* 10 -> 8/9 Rouge */ ,{&i2c_port1, 0x10}} /* 10 -> 8/9 Vert Only Green works*/
 		,{{&i2c_port5, 0x10} /* 7 -> 5 Rouge */ ,{&i2c_port5, 0x20}} /* 7 -> 5 Vert */
 		,{{&i2c_port5, 0x08} /* 6 -> 5 Rouge */	,{&i2c_port5, 0x04}} /* 6 -> 5 Vert */
 		,{{&i2c_port5, 0x80} /* 5 -> 3/4 Rouge*/ ,{&i2c_port5, 0x40}} /* 5 -> 3/4 Vert */
@@ -183,7 +183,8 @@ t_track tracks[MAX_TRACKS] = {
 		,{0,0,&occupancy[9]}
 };
 
-#define LOCO_STOP_TIME 1000
+//#define LOCO_STOP_TIME 1000
+#define LOCO_STOP_TIME 500
 
 
 Nokia5510 lcd(PIN_SS, PIN_DC,PIN_RST);
@@ -830,6 +831,10 @@ void loop()
 		station_mode = digital;
 		enable_follow_loco = false;
 		enable_light_control = true;
+		// Make sure all points are unlocked
+		for (uint8_t i=0; i<5; i++) {
+			aiguillage[i].unlock();
+		}
 
 		Serial.println(F("Auto - getting loco1"));
 
@@ -876,7 +881,7 @@ void loop()
 				F("            "),
 				F("            ")
 		);
-		delay(2000);
+		delay(1000);
 		loco1.loco->speed = 1;
 		buzzer_on(50);
 		delay(200);
@@ -929,7 +934,7 @@ void loop()
 				F("            "),
 				F("            ")
 		);
-		delay(2000);
+		delay(1000);
 		loco2.loco->speed = 1;
 		buzzer_on(50);
 		delay(200);
@@ -970,11 +975,7 @@ void loop()
 		loco1.point_set = false;
 		loco2.point_set = false;
 //		loco_last_time=0;
-		// Make sure all points are unlocked
-		for (uint8_t i=0; i<5; i++) {
-			aiguillage[i].unlock();
 
-		}
 //		loco_next_time = 0;
 		follow_loco_enable();
 
@@ -999,7 +1000,7 @@ void loop()
 			bool blocked;
 
 			// Now update the display
-			delay(200);
+			delay(100);
 			if (current_alarm != 0) {
 				lcd.menu(F("            "),
 						F(" DIGITAL    "),
@@ -1090,7 +1091,7 @@ void loop()
 					lcd.print(F(" 0"));
 				}
 				lcd.go(8,4);
-				if (loco2.blocked) {
+				if (blocked) {
 					lcd.write('*');
 				} else {
 					lcd.write(0x7c);
