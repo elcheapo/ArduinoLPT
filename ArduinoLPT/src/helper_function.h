@@ -503,12 +503,39 @@ void follow_loco_enable(void) {
 	enable_follow_loco = true;;
 }
 
+void unlock_point(uint8_t track) {
+	switch (track) {
+	case O_V1:
+	case O_V2:
+		aiguillage[A_SE].unlock();
+		Serial.println(F("U-SE"));
+		break;
+	case O_V3:
+	case O_V4:
+		aiguillage[A_NE].unlock();
+		Serial.println(F("U-NE"));
+		break;
+	case O_V9:
+	case O_V8:
+		aiguillage[A_SW].unlock();
+		Serial.println(F("U-SW"));
+		break;
+	case O_V7:
+	case O_V6:
+		aiguillage[A_NW].unlock();
+		Serial.println(F("U-NW"));
+		break;
+	default:
+		break;
+	}
+
+}
 //uint32_t loco_last_time;
-//uint32_t loco_next_time;
+uint32_t loco_next_time;
 void follow_loco(void) {
 	if(!enable_follow_loco) return;
-	// Don't do it too often : every 200 ms
-//	if (!(millis() > loco_next_time)) return;
+	// Don't do it too often : every 50 ms
+	if (!(millis() > loco_next_time)) return;
 
 	// Let's look at loco1
 	// The loco should not be blocked and moving
@@ -534,6 +561,7 @@ void follow_loco(void) {
 			loco2.track_segment = loco2.next_track_segment;
 		}
 	}	// Also make sure the locos are still where they should be ...
+#if 0
 	if (tracks[loco1.track_segment].occupied == 0) {
 		// We lost loco1 ???
 //		buzzer_on(50);
@@ -544,7 +572,8 @@ void follow_loco(void) {
 //		buzzer_on(50);
 		Serial.println(F("Lost LOCO2"));
 	}
-//	loco_next_time = millis() + 200;
+#endif
+	loco_next_time = millis() + 50;
 }
 
 #if 0
@@ -617,16 +646,30 @@ int8_t read_loco_on_prog_track(t_loco_on_track &newloco) {
 	// 1) Read Loco address on prog track
 
 	Serial.print(F("Reading Adress"));
+	dcc_control.end();
 	delay(100);
 	aiguillage[A_GARAGE].set_state(s_devie);
 
 	station_mode = digital;
 	dcc_control.begin(digital);
 	dcc_control.set_direct();
+    // First send 20 resets to prime including 3 for direct mode ...
+    DCC_Reset.repeat = 20;
+    while (dcc_control.dcc_busy() != 0);
+    dcc_control.send_direct_dcc_packet(&DCC_Reset);
+    while (dcc_control.dcc_busy() != 0);
+    DCC_Reset.repeat = 1;
 
 	// Power up Prog Track, disable main track
 	digitalWrite(A3,HIGH);
 	digitalWrite(A2,LOW);
+    // First send 20 resets to prime ...
+    DCC_Reset.repeat = 20;
+    while (dcc_control.dcc_busy() != 0);
+    dcc_control.send_direct_dcc_packet(&DCC_Reset);
+    while (dcc_control.dcc_busy() != 0);
+    DCC_Reset.repeat = 1;
+
 	lcd.menu(F("            "),
 			F(" Mettre une "),
 			F("Locomotive  "),
@@ -821,11 +864,8 @@ bool control_loco(t_loco_on_track &loco, uint16_t position) {
 
 	// Did we get onto the "next track segment"  ?
 	if (loco.track_segment == loco.next_track_segment) {
-		if (loco.unlock_segment != 99) {
-			aiguillage[loco.to_unlock].unlock();
-			loco.unlock_segment = 99;
-		}
-
+		Serial.write('S');Serial.print(loco.track_segment,10);
+		unlock_point(loco.track_segment);
 		loco.point_set = false;
 		// decide about the next track segment
 		switch (loco.track_segment) {
@@ -864,113 +904,104 @@ bool control_loco(t_loco_on_track &loco, uint16_t position) {
 			}
 			break;
 		}
+		// Now can go onto the next track segment without problem ?
+		// Is it free ?
+		if (tracks[loco.next_track_segment].occupied != 0) {
+			// There is somebody there
+			Serial.write('B');
+			loco.blocked = true;
+		}
 	}
-	// Now can go onto the next track segment without problem ?
+	// Can we go now ?
 	// Is it free ?
-	if (tracks[loco.next_track_segment].occupied != 0) {
-		// There is somebody there
-		Serial.write('B');
-		loco.blocked = true;
-	} else { // The next segment is free let's try to set the point ...
-		if (!loco.point_set) {
-			// Do we need to set a point ? Is it not locked ?
-			switch (loco.track_segment) {
-			case O_V9:
-			case O_V8:
-			case O_V3:
-			case O_V4:
-				// No problem in this case ...
-				loco.blocked = false;
-				break;
-			case O_V10: {
-				if (loco.next_track_segment == O_V9) {
-					if (aiguillage[A_NW].set_state_and_lock(s_droit) ) {
-						// We have set and locked the point, take a note to unlock it ...
-						loco.to_unlock = A_NW;
-						loco.blocked = false;
-					} else {
-						// can't set the point for now - just stop in 3 sec
-						loco.blocked = true;
-					}
-				} else {
-					if (aiguillage[A_NW].set_state_and_lock(s_devie) ) {
-						// We have set and locked the point, take a note to unlock it ...
-						loco.to_unlock = A_NW;
-						loco.blocked = false;
-					} else {
-						// can't set the point for now - just stop in 3 sec
-						loco.blocked = true;
-					}
-				}
-				break;
-			}
-			case O_V5: {
-				if (loco.next_track_segment == O_V4) {
-					if (aiguillage[A_SE].set_state_and_lock(s_droit) ) {
-						// We have set and locked the point, take a note to unlock it ...
-						loco.to_unlock = A_SE;
-						loco.blocked = false;
-					} else {
-						// can't set the point for now - just stop in 3 sec
-						loco.blocked = true;
-					}
-				} else {
-					if (aiguillage[A_SE].set_state_and_lock(s_devie) ) {
-						// We have set and locked the point, take a note to unlock it ...
-						loco.to_unlock = A_SE;
-						loco.blocked = false;
-					} else {
-						// can't set the point for now - just stop in 3 sec
-						loco.blocked = true;
-					}
-				}
-				break;
-			}
-			case O_V6: {
-				if (aiguillage[A_NE].set_state_and_lock(s_devie) ) {
+	if ((loco.blocked) && (tracks[loco.next_track_segment].occupied == 0)) {
+		// nobody there
+		Serial.write('b');
+		loco.blocked = false;
+	}
+	// The next segment is free let's try to set the point ...
+	if ( (!loco.blocked) && (!loco.point_set) ) {
+		Serial.write('P');
+		// Do we need to set a point ? Is it not locked ?
+		switch (loco.track_segment) {
+		case O_V9:
+		case O_V8:
+		case O_V3:
+		case O_V4:
+			// No problem in this case ...
+			break;
+		case O_V10: {
+			if (loco.next_track_segment == O_V9) {
+				if (aiguillage[A_NW].set_state_and_lock(s_droit) ) {
 					// We have set and locked the point, take a note to unlock it ...
-					loco.to_unlock = A_NE;
-					loco.blocked = false;
 				} else {
 					// can't set the point for now - just stop in 3 sec
 					loco.blocked = true;
 				}
-				break;
-			}
-			case O_V7: {
-				if (aiguillage[A_NE].set_state_and_lock(s_droit) ) {
+			} else {
+				if (aiguillage[A_NW].set_state_and_lock(s_devie) ) {
 					// We have set and locked the point, take a note to unlock it ...
-					loco.to_unlock = A_NE;
-					loco.blocked = false;
 				} else {
 					// can't set the point for now - just stop in 3 sec
 					loco.blocked = true;
 				}
-				break;
 			}
-			case O_V1: {
-				if (aiguillage[A_SW].set_state_and_lock(s_devie) ) {
+			break;
+		}
+		case O_V5: {
+			if (loco.next_track_segment == O_V4) {
+				if (aiguillage[A_SE].set_state_and_lock(s_droit) ) {
 					// We have set and locked the point, take a note to unlock it ...
-					loco.to_unlock = A_SW;
-					loco.blocked = false;
 				} else {
 					// can't set the point for now - just stop in 3 sec
 					loco.blocked = true;
 				}
-				break;
-			}
-			case O_V2: {
-				if (aiguillage[A_SW].set_state_and_lock(s_droit) ) {
+			} else {
+				if (aiguillage[A_SE].set_state_and_lock(s_devie) ) {
 					// We have set and locked the point, take a note to unlock it ...
-					loco.to_unlock = A_SW;
-					loco.blocked = false;
 				} else {
 					// can't set the point for now - just stop in 3 sec
 					loco.blocked = true;
 				}
-				break;
 			}
+			break;
+		}
+		case O_V6: {
+			if (aiguillage[A_NE].set_state_and_lock(s_devie) ) {
+				// We have set and locked the point, take a note to unlock it ...
+			} else {
+				// can't set the point for now - just stop in 3 sec
+				loco.blocked = true;
 			}
+			break;
+		}
+		case O_V7: {
+			if (aiguillage[A_NE].set_state_and_lock(s_droit) ) {
+				// We have set and locked the point, take a note to unlock it ...
+			} else {
+				// can't set the point for now - just stop in 3 sec
+				loco.blocked = true;
+			}
+			break;
+		}
+		case O_V1: {
+			if (aiguillage[A_SW].set_state_and_lock(s_devie) ) {
+				// We have set and locked the point, take a note to unlock it ...
+			} else {
+				// can't set the point for now - just stop in 3 sec
+				loco.blocked = true;
+			}
+			break;
+		}
+		case O_V2: {
+			if (aiguillage[A_SW].set_state_and_lock(s_droit) ) {
+				// We have set and locked the point, take a note to unlock it ...
+			} else {
+				// can't set the point for now - just stop in 3 sec
+				loco.blocked = true;
+			}
+			break;
+		}
 		}
 	}
 	if (loco.blocked) {
@@ -985,8 +1016,8 @@ bool control_loco(t_loco_on_track &loco, uint16_t position) {
 	} else {
 		uint8_t speed;
 		loco.point_set = true;
-		loco.unlock_segment = loco.next_track_segment;
-		loco.stop_time = 0;
+		Serial.write('s');
+//		loco.stop_time = 0;
 		// Only allow clockwise ...
 		if (position > 530) {
 			speed = ((position-520) >> 2) + 2 ;
@@ -999,6 +1030,7 @@ bool control_loco(t_loco_on_track &loco, uint16_t position) {
 			loco.loco->speed = 1;
 		}
 	}
+	Serial.println();
 	return loco.blocked;
 }
 void (* const todo_in_idle[])(void) PROGMEM = {

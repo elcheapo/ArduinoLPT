@@ -55,9 +55,6 @@ typedef struct {
 	uint8_t version;
 	bool blocked;
 	bool point_set;
-	uint32_t stop_time;
-	uint8_t to_unlock;
-	uint8_t unlock_segment;
 } t_loco_on_track;
 
 //typedef enum {ok_to_run, slow_down, stop_now} t_control;
@@ -781,7 +778,8 @@ void loop()
 	}
 	case 'B': {
 		uint8_t address,constructeur,version;
-		Serial.print(F("Reading Adress"));
+		Serial.println(F("Reading Adress"));
+		dcc_control.end();
 		delay(100);
 		station_mode = digital;
 		dcc_control.begin(digital);
@@ -1047,6 +1045,7 @@ void loop()
 					loco1.loco->speed = 0;
 				}
 				// Can we let the guy drive ?
+				Serial.print(F("L1:"));
 				blocked = control_loco(loco1,position);
 				lcd.go(0,3);
 				lcd.print(loco1.loco->address);
@@ -1079,6 +1078,7 @@ void loop()
 					loco2.loco->speed = 0;
 				}
 				// Can we let the guy drive ?
+				Serial.print(F("L2:"));
 				blocked = control_loco(loco2, position);
 				lcd.go(0,4);
 				lcd.print(loco2.loco->address);
