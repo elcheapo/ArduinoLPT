@@ -167,7 +167,7 @@ int8_t getint(uint16_t & value) {
 		delay(200);
 		key = kbd.get_key();
 	} while (key != 0);
-	Serial.write('o');
+//	Serial.write('o');
 	value = 0;
 	while (1) {
 		lcd.print('\x83');
@@ -194,7 +194,7 @@ int8_t getint(uint16_t & value) {
 		case 'D':
 			lcd.write('\b');
 			lcd.write(' ');
-			Serial.println(value);
+//			Serial.println(value);
 			return 0;
 		case '*':
 			return -1;
@@ -224,8 +224,12 @@ void set_light (const t_signal * light, l_state light_state ) {
 	}
 }
 
+uint32_t light_next_time;
 void light_control (void) {
 	if (!enable_light_control) return;
+	if (!(millis() > light_next_time)) return;
+
+
 	// On V10
 	if (aiguillage[A_NW].get_state() == s_droit) {
 		if (tracks[O_V9].occupied != 0) {
@@ -312,6 +316,7 @@ void light_control (void) {
 		// don't know the point state - be safe
 		set_light(&traffic_lights[TL_V2],l_red);
 	}
+	light_next_time = millis() + 500;
 }
 
 sens quel_sens(t_loco_on_track & testloco) {
@@ -508,22 +513,22 @@ void unlock_point(uint8_t track) {
 	case O_V1:
 	case O_V2:
 		aiguillage[A_SE].unlock();
-		Serial.println(F("U-SE"));
+//		Serial.println(F("U-SE"));
 		break;
 	case O_V3:
 	case O_V4:
 		aiguillage[A_NE].unlock();
-		Serial.println(F("U-NE"));
+//		Serial.println(F("U-NE"));
 		break;
 	case O_V9:
 	case O_V8:
 		aiguillage[A_SW].unlock();
-		Serial.println(F("U-SW"));
+//		Serial.println(F("U-SW"));
 		break;
 	case O_V7:
 	case O_V6:
 		aiguillage[A_NW].unlock();
-		Serial.println(F("U-NW"));
+//		Serial.println(F("U-NW"));
 		break;
 	default:
 		break;
@@ -864,7 +869,7 @@ bool control_loco(t_loco_on_track &loco, uint16_t position) {
 
 	// Did we get onto the "next track segment"  ?
 	if (loco.track_segment == loco.next_track_segment) {
-		Serial.write('S');Serial.print(loco.track_segment,10);
+//		Serial.write('S');Serial.print(loco.track_segment,10);
 		unlock_point(loco.track_segment);
 		loco.point_set = false;
 		// decide about the next track segment
@@ -908,20 +913,20 @@ bool control_loco(t_loco_on_track &loco, uint16_t position) {
 		// Is it free ?
 		if (tracks[loco.next_track_segment].occupied != 0) {
 			// There is somebody there
-			Serial.write('B');
+//			Serial.write('B');
 			loco.blocked = true;
 		}
 	}
 	// Can we go now ?
 	// Is it free ?
-	if ((loco.blocked) && (tracks[loco.next_track_segment].occupied == 0)) {
+	if (tracks[loco.next_track_segment].occupied == 0) {
 		// nobody there
-		Serial.write('b');
+//		Serial.write('b');
 		loco.blocked = false;
 	}
 	// The next segment is free let's try to set the point ...
 	if ( (!loco.blocked) && (!loco.point_set) ) {
-		Serial.write('P');
+//		Serial.write('P');
 		// Do we need to set a point ? Is it not locked ?
 		switch (loco.track_segment) {
 		case O_V9:
@@ -1012,11 +1017,15 @@ bool control_loco(t_loco_on_track &loco, uint16_t position) {
 			loco.loco->speed = 0;
 		}
 #endif
-		loco.loco->speed = 0;
+		if (loco.reversed  == 0) {
+			loco.loco->speed = 0x80 + 0;
+		} else {
+			loco.loco->speed = 0;
+		}
 	} else {
 		uint8_t speed;
 		loco.point_set = true;
-		Serial.write('s');
+//		Serial.write('s');
 //		loco.stop_time = 0;
 		// Only allow clockwise ...
 		if (position > 530) {
@@ -1027,10 +1036,14 @@ bool control_loco(t_loco_on_track &loco, uint16_t position) {
 				loco.loco->speed = speed;
 			}
 		} else {
-			loco.loco->speed = 1;
+			if (loco.reversed  == 0) {
+				loco.loco->speed = 0x80 + 1;
+			} else {
+				loco.loco->speed = 1;
+			}
 		}
 	}
-	Serial.println();
+//	Serial.println();
 	return loco.blocked;
 }
 void (* const todo_in_idle[])(void) PROGMEM = {
